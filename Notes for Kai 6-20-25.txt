@@ -1,0 +1,9 @@
+Moving forward, get in the habit of structuring your web projects like this:
+
+root directory:
+	-"css" directory (put your css files here)
+	-"src" directory (all your .js files go here)
+		- "server" directory (.js files on the server go here)
+		- "public" directory (.js files for the client go here)
+	-"imgs" directory (images go here, if any)
+	"index.html"
