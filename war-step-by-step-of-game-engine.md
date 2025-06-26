@@ -13,11 +13,15 @@ Functions called:
 
 Note: there is no need to use createDeck() for War, because neither player really has a deck, they instead both just have hands with a large amount of cards.
 
+Bo: I think it's more appropriate to give the players decks instead of hands. The hand object will probably have behavior that fans it out for players to see, and lets players select a card from among the hand, all of which would have to be overridden for War. It makes more sense to give each player a deck, since they don't get to look at the cards or choose which is drawn, they just take the top card from the deck.
+
 **Turn 1**
 A game loop is started and will stop looping once a game winner is found.
 `moveCardToZone()` is called twice for each player taking a card from their hand and putting it into their respective battle piles.
 Some sort of `card comparison` function will have to be used, but this kind of function varies a lot between different card games, so it will most likely need to be made by the script.
 
+<!-- Bo: most comparisons in card games are going to be comparing two integers, so we can probably have an engine method for that. But it could probably go either way.
+ -->
 After the `card comparison` function is ran, a war may happen. It will need to return a player.
 `getZoneId()` will be called immediately after the battle if a war does not happen, and will use the player object that was returned from the card comparsion to get the correct zone for the cards to be moved to.
     If a war does happen though, then `moveCardToZone()` needs to be called 4 times for each player in the same way it was just called earlier this turn.
@@ -28,10 +32,14 @@ After the `card comparison` function is ran, a war may happen. It will need to r
 
 `moveCardToZone()` is the next function that's called, whether or not there is a war, and will be used on each player's battle pile and will move all of the cards to the wonCards zone of the player who won the battle.
 
+<!-- Bo: I think it will be helpful to think of "steps" or "phases" of a turn. A "battle" step for the players drawing two cards and comparing them, a "cleanup" step for moving the cards to the winner's pile, a "war" step when a war happens. This will keep things organized.
+ -->
 **Turn 2**
 `setGameStatus()` will need to be ran at the start of every turn after Turn 1 to adjust the score of each player based on their total cards, in case the game ends at the end of the turn.
     Every time this function is ran, it will have to run `getCardAmountFromZone()` twice on both each player's hand and wonCards zones (4 times total), and add each of those 2 ints together to set the scores.
-
+	
+<!-- Bo: What is a turn in War? Is it the time it takes for one player to run out of cards? Is it whenever a player flips a card? 
+ -->
 `getCardAmountFromZone()` will also need to be checked for the hand zone at the start of every turn following Turn 1, because it's always possible for the hand to be empty if enough wars were stringed along in a row.
     If it returns 0, then `getCardAmountFromZone()` will need to be called again for the wonCards zone, and the int it returns will determine the exact amount of times that `moveCardToZone()` should be called.
     But before moving any cards, `getCardAmountFromZone()` will be called again for the wonCards zone.
