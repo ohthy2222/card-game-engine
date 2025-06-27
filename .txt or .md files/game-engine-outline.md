@@ -17,8 +17,8 @@ PURPOSE: The purpose of the createPlayer() function is to create a player object
 **createZone(player, int, int, int, int, bool, bool)**
 PURPOSE: The purpose of the createZone() function is to create a Zone ID for cards to be placed in that can be accessed via getZoneId(). It takes a player object so that it knows which player it's assigned to, 4 ints for the x and y coordinates of it's top left corner, and it's length and width. It also needs to know if it's "hidden" or not. And if it's "face up or face down." For these, bool seems like the best data type.
 
-**createCardId()**
-PURPOSE: The purpose of the createCardID() function is to create a card ID that can be accessed via getCardId(). The script would need to be responsible for any CSS styling or logic that the card would contain. Note: the cards are face up upon creation.
+**createCard()**
+PURPOSE: The purpose of the createCard() function is to create a card ID that can be accessed via getCardId(). The script would need to be responsible for any CSS styling or logic that the card would contain. Note: the cards are face up upon creation.
 
 **createDeck(player, vector<card>)**
 PURPOSE: The purpose of the createDeck() function is to create placeholder that takes an initial list/vector of cards and can have cards added and removed to it and would be known as a deck of card IDs that can be accessed via getDeckId().
@@ -42,7 +42,7 @@ PURPOSE: The purpose of the getDeckSize() function is to access and use the deck
 PURPOSE: The purpose of the getCardAmountFromZone() function is to access and use the zone card amount for checks such as checking if the zone has ran out of cards.
 
 **card getCardId()**
-PURPOSE: The purpose of the getCardId() function is to access and use the card ID that was made by createCardId().
+PURPOSE: The purpose of the getCardId() function is to access and use the card ID that was made by createCard().
 
 
 MUTATORS:
