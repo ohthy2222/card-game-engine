@@ -11,14 +11,77 @@
 
     <body>
         <!-- Create the createDeck() button that calls that function -->
-        <button id = 'create-deck' onclick = 'createDeck()'> createDeck() </button>
+        <button id = 'create-deck' onclick = 'handleCreateDeck()'> createDeck() </button>
 
         <!-- Create the createZone() button that calls that function -->
-        <button id = 'create-zone' onclick = 'createZone()'> createZone() </button>
+        <button id = 'create-zone' onclick = 'handleCreateZone()'> createZone() </button>
 
         <!-- Create the moveCardToZone() button that calls that function -->
-        <button id = 'move-card-to-zone' onclick = 'moveCardToZone()'> moveCardToZone() </button>
+        <button id = 'move-card-to-zone' onclick = 'handleMoveCardToZone()'> moveCardToZone() </button>
 
+        <div id = "game-log"> </div>
+
+        <script>
+            // Include the card-game-engine.js file to use all of it's methods
+            <script src = "card-game-engine.js" > </script>
+
+            // Defining Methods from Game Engine to be used in GUI
+            const engine = new GameEngine();
+
+            let player1 = engine.createPlayer();
+            let player2 = engine.createPlayer();
+
+            let zone1 = null;
+            let zone2 = null;
+            let card1 = null;
+            let deck1 = null;
+
+            function log(message, data = null) {
+            const output = document.getElementById("output");
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement("div");
+
+            entry.innerHTML = `<b>[${time}]</b> ${message}`;
+            if (data) {
+                const pre = document.createElement("pre");
+                pre.textContent = JSON.stringify(data, null, 2);
+                entry.appendChild(pre);
+            }
+
+            output.appendChild(entry);
+            }
+
+            function handleCreateZone() {
+            try {
+                zone1 = engine.createZone(player1, 0, 0, 100, 150, true, true);
+                zone2 = engine.createZone(player2, 0, 0, 100, 150, true, true);
+                log("createZone() success", { zone1, zone2 });
+            } catch (err) {
+                log("createZone() failed", { error: err.message });
+            }
+            }
+
+            function handleCreateDeck() {
+            try {
+                card1 = engine.createCard();
+                deck1 = engine.createDeck(player1, [card1]);
+                log("createDeck() success", deck1);
+            } catch (err) {
+                log("createDeck() failed", { error: err.message });
+            }
+            }
+
+            function handleMoveCardToZone() {
+            try {
+                if (!zone1 || !card1) {
+                throw new Error("You must create a zone and card first.");
+                }
+                engine.moveCardToZone(card1, null, zone1, true);
+                log("moveCardToZone() success", zone1);
+            } catch (err) {
+                log("moveCardToZone() failed", { error: err.message });
+            }
+            }
+        </script>
     </body>
-
 </html>
