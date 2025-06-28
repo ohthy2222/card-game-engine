@@ -1,0 +1,271 @@
+<!-- Game Engine Tester Graphical User Interface for easy testing purposes to make sure that all of the game engine methods work properly -->
+
+<!DOCTYPE html>
+<html lang = "en">
+
+    <head>
+        <meta charset = "UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Game Engine Tester GUI</title>
+    </head>
+
+    <body>
+        <!-- Create the createDeck() button that calls that function -->
+        <button id = 'create-deck' onclick = 'handleCreateDeck()'> createDeck() </button>
+
+        <!-- Create the createZone() button that calls that function -->
+        <button id = 'create-zone' onclick = 'handleCreateZone()'> createZone() </button>
+
+        <!-- Create the buttons for the Mutators -->
+        <button id = 'move-card-to-zone' onclick = 'handleMoveCardToZone()'> moveCardToZone() </button>
+        <button id = 'add-card' onclick = 'handleAddCard()'> addCard() </button>
+        <button id = 'remove-card' onclick = 'handleRemoveCard()'> removeCard() </button>
+        <button id = 'shuffle-deck' onclick = 'handleShuffleDeck()'> shuffleDeck() </button>
+
+        <div id = "game-log"> </div>
+
+        <script>
+            // Include the card-game-engine.js file to use all of it's methods
+            /* Game Engine File that any card game script can use for it's methods to run a card game */
+
+class GameEngine
+{
+    constructor()
+    {
+        // Create empty arrays to store objects
+        this.players = [];
+        this.zones = [];
+        this.cards = [];
+        this.decks = [];
+
+        // Increase the counter every time a new object is made to ensure the ids are unique
+        this.cardIdCounter = 0;
+        this.zoneIdCounter = 0;
+        this.playerIdCounter = 0;
+    }
+
+    // CONSTRUCTORS
+
+    createPlayer()
+    {
+        const player = { id: this.playerIdCounter++ };
+        this.players.push(player);
+        return player;
+    }
+
+    createZone(player, x, y, length, width, hidden, faceUp)
+    {
+        const zone = {
+            id: this.zoneIdCounter++,
+            owner: player,
+            x, y, length, width,
+            hidden,
+            faceUp,
+            cards: []
+        };
+        this.zones.push(zone);
+        return zone;
+    }
+
+    createCard()
+    {
+        const card = { id: this.cardIdCounter++ };
+        this.cards.push(card);
+        return card;
+    }
+
+    createDeck(player, cardArray)
+    {
+        const deck = {
+            id: `deck-${player.id}`,
+            owner: player,
+            cards: [...cardArray]
+        };
+        this.decks.push(deck);
+        return deck;
+    }
+
+    // ACCESSORS
+
+    getPlayerId(player)
+    {
+        return player.id;
+    }
+
+    getZoneId(player)
+    {
+        return this.zones.find(z => z.owner === player)?.id;
+    }
+
+    getDeckId(player)
+    {
+        return this.decks.find(d => d.owner === player)?.id;
+    }
+
+    getDeckSize(deck)
+    {
+        return deck.cards.length;
+    }
+
+    getCardAmountFromZone(zone)
+    {
+        return zone.cards.length;
+    }
+
+    getCardId(card)
+    {
+        return card.id;
+    }
+
+    // MUTATORS
+
+    moveCardToZone(card, fromZone, toZone, isFaceUp)
+    {
+        if (fromZone) {
+            fromZone.cards = fromZone.cards.filter(c => c.id !== card.id);
+        }
+        if (toZone) {
+            toZone.cards.push({ ...card, faceUp: isFaceUp });
+        }
+    }
+
+    addCard(deck, card)
+    {
+        deck.cards.push(card);
+    }
+
+    removeCard(deck, card)
+    {
+        deck.cards = deck.cards.filter(c => c.id !== card.id);
+    }
+
+    shuffleDeck(deck)
+    {
+        for (let i = deck.cards.length - 1; i > 0; --i)
+        {
+            const j = Math.floor(Math.random() * (i + 1));
+            [deck.cards[i], deck.cards[j]] = [deck.cards[j], deck.cards[i]];
+        }
+    }
+
+    // OTHER METHODS
+
+    compareCards(cardA, cardB)
+    {
+        return cardA.value > cardB.value ? 1 : cardA.value < cardB.value ? -1 : 0;
+    }
+};
+
+class GameStatus
+{
+    constructor()
+    {
+        this.statuses = new Map(); // key: player.id, value: integer
+        this.winDecider = null;
+    }
+
+    // CONSTRUCTORS
+
+    createGameStatus(player)
+    {
+        this.statuses.set(player.id, 0);
+    }
+
+    // ACCESSORS
+
+    getGameStatus(player)
+    {
+        return this.statuses.get(player.id);
+    }
+
+    getGameWinner(scoreP1, scoreP2)
+    {
+        if (scoreP1 > scoreP2)
+        {
+                return "Player 1";
+        }
+        else if (scoreP2 > scoreP1)
+        {
+            return "Player 2";
+        }
+        else
+        {
+            return "Tie";
+        }
+    }
+
+    // MUTATORS
+
+    setGameStatus(player, value)
+    {
+        this.statuses.set(player.id, value);
+    }
+
+    setWinDecider(player)
+    {
+        this.winDecider = player.id;
+    }
+
+};
+
+
+            // Defining Methods from Game Engine to be used in GUI
+            const engine = new GameEngine();
+
+            let player1 = engine.createPlayer();
+            let player2 = engine.createPlayer();
+
+            let zone1 = null;
+            let zone2 = null;
+            let card1 = null;
+            let deck1 = null;
+
+            function log(message, data = null) {
+            const output = document.getElementById("game-log");
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement("div");
+
+            entry.innerHTML = `<b>[${time}]</b> ${message}`;
+            if (data) {
+                const pre = document.createElement("pre");
+                pre.textContent = JSON.stringify(data, null, 2);
+                entry.appendChild(pre);
+            }
+
+            output.appendChild(entry);
+            }
+
+            function handleCreateZone() {
+            try {
+                zone1 = engine.createZone(player1, 0, 0, 100, 150, true, true);
+                zone2 = engine.createZone(player2, 0, 0, 100, 150, true, true);
+                log("createZone() success", { zone1, zone2 });
+            } catch (err) {
+                log("createZone() failed", { error: err.message });
+            }
+            }
+
+            function handleCreateDeck() {
+            try {
+                card1 = engine.createCard();
+                deck1 = engine.createDeck(player1, [card1]);
+                log("createDeck() success", deck1);
+            } catch (err) {
+                log("createDeck() failed", { error: err.message });
+            }
+            }
+
+            function handleMoveCardToZone() {
+            try {
+                if (!zone1 || !card1) {
+                throw new Error("You must create a zone and card first.");
+                }
+                engine.moveCardToZone(card1, null, zone1, true);
+                log("moveCardToZone() success", zone1);
+            } catch (err) {
+                log("moveCardToZone() failed", { error: err.message });
+            }
+            }
+        </script>
+    </body>
+</html>
