@@ -1143,7 +1143,7 @@
                     }
                     currentPlayers.push(player);
                     updateStats();
-                    log(`Player created with ID: ${player.id}${playerName ? ` (${playerName})` : ''}`, 'success', player);
+                    log(`Player created with ID: ${player.id}${playerName ? ` (${playerName})` : ''}`, 'success');
                     showNotification(`Player ${player.id} created!`);
                 } catch (err) {
                     log("createPlayer() failed", 'error', { error: err.message });
@@ -1199,7 +1199,12 @@
                         return;
                     }
                     
-                    const selectedPlayer = result.selected[0];
+                    const selectedPlayerData = result.selected[0];
+                    // Find the actual player object
+                    const selectedPlayer = currentPlayers.find(p => p.id === selectedPlayerData.id);
+                    if (!selectedPlayer) {
+                        throw new Error(`Player ${selectedPlayerData.id} not found!`);
+                    }
                     const zone = engine.createZone(
                         selectedPlayer,
                         result.x,
@@ -1218,7 +1223,7 @@
                     createVisualZone(zone, currentZones.length - 1);
                     updateStats();
                     
-                    log(`Zone created with ID: ${zone.id} for Player ${selectedPlayer.id} at (${result.x}, ${result.y})`, 'success', zone);
+                    log(`Zone created with ID: ${zone.id} for Player ${selectedPlayer.id} at (${result.x}, ${result.y})`, 'success');
                     showNotification(`Zone ${zone.id} created!`);
                 } catch (err) {
                     log("createZone() failed", 'error', { error: err.message });
@@ -1229,7 +1234,7 @@
             async function handleCreateCard() {
                 try {
                     const zoneOptions = currentZones.length > 0 ? currentZones.map(z => 
-                        `<div class="selection-item" data-value='${JSON.stringify(z)}'>
+                        `<div class="selection-item" data-value='${JSON.stringify({id: z.id, owner: {id: z.owner.id}, x: z.x, y: z.y, width: z.width, length: z.length, hidden: z.hidden, faceUp: z.faceUp})}'>
                             Zone ${z.id} (Player ${z.owner.id})
                         </div>`
                     ).join('') : '<div style="color: #718096; text-align: center;">No zones available</div>';
@@ -1274,7 +1279,13 @@
                     
                     // Assign to zone if selected
                     if (result.selected && result.selected.length > 0) {
-                        const selectedZone = result.selected[0];
+                        const selectedZoneData = result.selected[0];
+                        // Find the actual zone object
+                        const selectedZone = currentZones.find(z => z.id === selectedZoneData.id);
+                        if (!selectedZone) {
+                            throw new Error(`Zone ${selectedZoneData.id} not found!`);
+                        }
+                        
                         card.assignedZone = selectedZone;
                         
                         // Create card and add it directly to the zone's container
@@ -1284,13 +1295,13 @@
                         // Move card to zone in the game engine
                         engine.moveCardToZone(card, null, selectedZone, true);
                         
-                        log(`Card created with ID: ${card.id}${card.displayName ? ` (${card.displayName})` : ''} and assigned to Zone ${selectedZone.id}`, 'success', card);
+                        log(`Card created with ID: ${card.id}${card.displayName ? ` (${card.displayName})` : ''} and assigned to Zone ${selectedZone.id}`, 'success');
                     } else {
                         // Create card without zone assignment
                         currentCards.push(card);
                         createVisualCard(card, currentCards.length - 1);
                         
-                        log(`Card created with ID: ${card.id}${card.displayName ? ` (${card.displayName})` : ''}`, 'success', card);
+                        log(`Card created with ID: ${card.id}${card.displayName ? ` (${card.displayName})` : ''}`, 'success');
                     }
                     
                     updateStats();
@@ -1346,13 +1357,13 @@
                     ).join('');
                     
                     const zoneOptions = currentZones.map(z => 
-                        `<div class="selection-item" data-value='${JSON.stringify(z)}'>
+                        `<div class="selection-item" data-value='${JSON.stringify({id: z.id, owner: {id: z.owner.id}, x: z.x, y: z.y, width: z.width, length: z.length, hidden: z.hidden, faceUp: z.faceUp})}'>
                             Zone ${z.id} (Player ${z.owner.id})
                         </div>`
                     ).join('');
                     
                     const cardOptions = currentCards.map(c => 
-                        `<div class="selection-item" data-value='${JSON.stringify(c)}'>
+                        `<div class="selection-item" data-value='${JSON.stringify({id: c.id, displayName: c.displayName, suit: c.suit, rank: c.rank, value: c.value})}'>
                             Card ${c.id}${c.displayName ? ` (${c.displayName})` : ''}
                         </div>`
                     ).join('');
@@ -1394,8 +1405,20 @@
                         return;
                     }
                     
-                    const selectedPlayer = result.selected[0];
-                    const selectedZone = result.selected[1];
+                    const selectedPlayerData = result.selected[0];
+                    const selectedZoneData = result.selected[1];
+                    
+                    // Find the actual objects
+                    const selectedPlayer = currentPlayers.find(p => p.id === selectedPlayerData.id);
+                    const selectedZone = currentZones.find(z => z.id === selectedZoneData.id);
+                    
+                    if (!selectedPlayer) {
+                        throw new Error(`Player ${selectedPlayerData.id} not found!`);
+                    }
+                    if (!selectedZone) {
+                        throw new Error(`Zone ${selectedZoneData.id} not found!`);
+                    }
+                    
                     let selectedCards;
                     
                     if (result.deckType === 'standard52') {
@@ -1403,8 +1426,15 @@
                         selectedCards = createStandardCards();
                         log(`Created ${selectedCards.length} standard playing cards`, 'info');
                     } else {
-                        // Use selected existing cards
-                        selectedCards = result.selected.slice(2); // First is player, second is zone, rest are cards
+                        // Use selected existing cards - find actual card objects
+                        const selectedCardData = result.selected.slice(2); // First is player, second is zone, rest are cards
+                        selectedCards = selectedCardData.map(cardData => {
+                            const card = currentCards.find(c => c.id === cardData.id);
+                            if (!card) {
+                                throw new Error(`Card ${cardData.id} not found!`);
+                            }
+                            return card;
+                        });
                         
                         if (selectedCards.length === 0) {
                             throw new Error("Select at least one card!");
@@ -1418,7 +1448,7 @@
                     createVisualDeck(deck, currentDecks.length - 1, selectedZone);
                     updateStats();
                     
-                    log(`Deck created with ID: ${deck.id} for Player ${selectedPlayer.id} with ${selectedCards.length} cards, assigned to Zone ${selectedZone.id}`, 'success', deck);
+                    log(`Deck created with ID: ${deck.id} for Player ${selectedPlayer.id} with ${selectedCards.length} cards, assigned to Zone ${selectedZone.id}`, 'success');
                     showNotification(`Deck created with ${deck.cards.length} cards!`);
                     
                     // Clean up temporary function
@@ -1442,13 +1472,13 @@
                     }
                     
                     const cardOptions = currentCards.map(c => 
-                        `<div class="selection-item" data-value='${JSON.stringify(c)}'>
+                        `<div class="selection-item" data-value='${JSON.stringify({id: c.id, displayName: c.displayName, suit: c.suit, rank: c.rank, value: c.value})}'>
                             Card ${c.id}${c.displayName ? ` (${c.displayName})` : ''}
                         </div>`
                     ).join('');
                     
                     const zoneOptions = currentZones.map(z => 
-                        `<div class="selection-item" data-value='${JSON.stringify(z)}'>
+                        `<div class="selection-item" data-value='${JSON.stringify({id: z.id, owner: {id: z.owner.id}, x: z.x, y: z.y, width: z.width, length: z.length, hidden: z.hidden, faceUp: z.faceUp})}'>
                             Zone ${z.id} (Player ${z.owner.id})
                         </div>`
                     ).join('');
@@ -1476,8 +1506,19 @@
                         return;
                     }
                     
-                    const selectedCard = result.selected[0];
-                    const selectedZone = result.selected[1];
+                    const selectedCardData = result.selected[0];
+                    const selectedZoneData = result.selected[1];
+                    
+                    // Find the actual objects
+                    const selectedCard = currentCards.find(c => c.id === selectedCardData.id);
+                    const selectedZone = currentZones.find(z => z.id === selectedZoneData.id);
+                    
+                    if (!selectedCard) {
+                        throw new Error(`Card ${selectedCardData.id} not found!`);
+                    }
+                    if (!selectedZone) {
+                        throw new Error(`Zone ${selectedZoneData.id} not found!`);
+                    }
                     
                     // Find if card is currently in a deck
                     let cardInDeck = null;
@@ -1594,7 +1635,7 @@
                     }
                     
                     const deckOptions = currentDecks.map(d => 
-                        `<div class="selection-item" data-value='${JSON.stringify(d)}'>
+                        `<div class="selection-item" data-value='${JSON.stringify({id: d.id, owner: {id: d.owner.id}, cards: d.cards.map(c => ({id: c.id, displayName: c.displayName, suit: c.suit, rank: c.rank, value: c.value}))})}'>
                             Deck ${d.id} (${d.cards.length} cards)
                         </div>`
                     ).join('');
@@ -1611,7 +1652,13 @@
                         return;
                     }
                     
-                    const selectedDeck = result.selected[0];
+                    const selectedDeckData = result.selected[0];
+                    // Find the actual deck object
+                    const selectedDeck = currentDecks.find(d => d.id === selectedDeckData.id);
+                    if (!selectedDeck) {
+                        throw new Error(`Deck ${selectedDeckData.id} not found!`);
+                    }
+                    
                     const deckElement = document.getElementById(`deck-${selectedDeck.id}`);
                     
                     // Add shuffle animation
