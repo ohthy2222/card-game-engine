@@ -1,0 +1,1675 @@
+<!-- Fancy Game Engine Tester GUI with Interactive Prompts and Drag-and-Drop Zones -->
+
+<!DOCTYPE html>
+<html lang = "en">
+
+    <head>
+        <meta charset = "UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Fancy Game Engine Tester GUI</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                padding: 20px;
+                color: #333;
+            }
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                background: rgba(255, 255, 255, 0.95);
+                border-radius: 20px;
+                padding: 30px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+                backdrop-filter: blur(10px);
+            }
+
+            h1 {
+                text-align: center;
+                color: #4a5568;
+                font-size: 2.5rem;
+                margin-bottom: 30px;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .game-area {
+                display: grid;
+                grid-template-columns: 1fr 2fr;
+                gap: 30px;
+                margin-bottom: 30px;
+            }
+
+            .controls-panel {
+                background: linear-gradient(145deg, #f7fafc, #edf2f7);
+                border-radius: 15px;
+                padding: 25px;
+                box-shadow: inset 5px 5px 10px #d1d9e6, inset -5px -5px 10px #ffffff;
+            }
+
+            .controls-panel h2 {
+                color: #2d3748;
+                margin-bottom: 20px;
+                font-size: 1.4rem;
+            }
+
+            .button-group {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            button {
+                background: linear-gradient(145deg, #4299e1, #3182ce);
+                color: white;
+                border: none;
+                padding: 15px 25px;
+                border-radius: 12px;
+                font-size: 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 5px 15px rgba(66, 153, 225, 0.3);
+                position: relative;
+                overflow: hidden;
+            }
+
+            button::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+                transition: left 0.5s;
+            }
+
+            button:hover::before {
+                left: 100%;
+            }
+
+            button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(66, 153, 225, 0.4);
+            }
+
+            button:active {
+                transform: translateY(0);
+            }
+
+            button:disabled {
+                background: #a0aec0;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+            }
+
+            .visualization-area {
+                background: #1a202c;
+                border-radius: 15px;
+                padding: 25px;
+                min-height: 400px;
+                position: relative;
+                overflow: hidden;
+                box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+            }
+
+            .visualization-area h2 {
+                color: #e2e8f0;
+                margin-bottom: 20px;
+                font-size: 1.4rem;
+            }
+
+            .zone {
+                position: absolute;
+                border: 2px dashed #4a5568;
+                border-radius: 10px;
+                background: rgba(74, 85, 104, 0.2);
+                padding: 10px;
+                transition: all 0.3s ease;
+                min-width: 120px;
+                min-height: 80px;
+                cursor: pointer;
+                user-select: none;
+            }
+
+            .zone:hover {
+                border-color: #68d391;
+                background: rgba(104, 211, 145, 0.2);
+                box-shadow: 0 0 15px rgba(104, 211, 145, 0.3);
+            }
+
+            .zone.selected {
+                border-color: #f56565;
+                background: rgba(245, 101, 101, 0.2);
+                box-shadow: 0 0 15px rgba(245, 101, 101, 0.5);
+            }
+
+            .zone.active {
+                border-color: #48bb78;
+                background: rgba(72, 187, 120, 0.2);
+                box-shadow: 0 0 20px rgba(72, 187, 120, 0.3);
+            }
+
+            .zone-label {
+                color: #e2e8f0;
+                font-size: 0.8rem;
+                font-weight: 600;
+                margin-bottom: 5px;
+                pointer-events: none;
+            }
+
+            .zone-cards {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                align-items: flex-start;
+                justify-content: flex-start;
+                pointer-events: none;
+                margin-top: 5px;
+            }
+
+            .zone-cards .card {
+                position: relative !important;
+                left: 0 !important;
+                top: 0 !important;
+                margin: 0 !important;
+                pointer-events: auto;
+                flex-shrink: 0;
+            }
+
+            .zone-cards .card:hover {
+                transform: scale(1.05);
+                z-index: 10;
+            }
+
+            .zone-coordinates {
+                color: #a0aec0;
+                font-size: 0.7rem;
+                margin-top: 5px;
+                pointer-events: none;
+            }
+
+            .card {
+                width: 60px;
+                height: 84px;
+                background: linear-gradient(145deg, #ffffff, #f7fafc);
+                border: 2px solid #e2e8f0;
+                border-radius: 8px;
+                position: absolute;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.7rem;
+                font-weight: bold;
+                color: #2d3748;
+            }
+
+            .card:hover {
+                transform: scale(1.05);
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            }
+
+            .card.selected {
+                border-color: #f56565;
+                background: rgba(245, 101, 101, 0.1);
+                box-shadow: 0 0 15px rgba(245, 101, 101, 0.5);
+            }
+
+            .card.face-down {
+                background: linear-gradient(145deg, #2d3748, #1a202c);
+                color: #e2e8f0;
+            }
+
+            .deck {
+                width: 70px;
+                height: 94px;
+                background: linear-gradient(145deg, #2d3748, #1a202c);
+                border: 2px solid #4a5568;
+                border-radius: 8px;
+                position: absolute;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.8rem;
+                font-weight: bold;
+                color: #e2e8f0;
+            }
+
+            .deck.selected {
+                border-color: #f56565;
+                box-shadow: 0 0 15px rgba(245, 101, 101, 0.5);
+            }
+
+            .deck::after {
+                content: '';
+                position: absolute;
+                top: -3px;
+                left: -3px;
+                width: 100%;
+                height: 100%;
+                background: inherit;
+                border-radius: inherit;
+                z-index: -1;
+            }
+
+            .deck::before {
+                content: '';
+                position: absolute;
+                top: -6px;
+                left: -6px;
+                width: 100%;
+                height: 100%;
+                background: inherit;
+                border-radius: inherit;
+                z-index: -2;
+                opacity: 0.7;
+            }
+
+            /* Modal Styles */
+            .modal {
+                display: none;
+                position: fixed;
+                z-index: 10000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(5px);
+            }
+
+            .modal-content {
+                background: linear-gradient(145deg, #ffffff, #f7fafc);
+                margin: 5vh auto;
+                padding: 30px;
+                border-radius: 15px;
+                width: 90%;
+                max-width: 600px;
+                max-height: 85vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                animation: modalSlideIn 0.3s ease;
+                position: relative;
+            }
+
+            @keyframes modalSlideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-50px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .modal h3 {
+                color: #2d3748;
+                margin-bottom: 20px;
+                font-size: 1.3rem;
+            }
+
+            .modal-buttons {
+                display: flex;
+                gap: 10px;
+                margin-top: 20px;
+                justify-content: flex-end;
+            }
+
+            .modal-button {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+
+            .modal-button.primary {
+                background: #4299e1;
+                color: white;
+            }
+
+            .modal-button.secondary {
+                background: #e2e8f0;
+                color: #2d3748;
+            }
+
+            .modal-button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            }
+
+            .selection-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 10px;
+                max-height: 300px;
+                overflow-y: auto;
+                margin: 20px 0;
+            }
+
+            .selection-item {
+                padding: 15px;
+                border: 2px solid #e2e8f0;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                background: white;
+            }
+
+            .selection-item:hover {
+                border-color: #4299e1;
+                background: #ebf8ff;
+            }
+
+            .selection-item.selected {
+                border-color: #4299e1;
+                background: #3182ce;
+                color: white;
+            }
+
+            .input-group {
+                margin: 15px 0;
+            }
+
+            .input-group label {
+                display: block;
+                margin-bottom: 5px;
+                color: #4a5568;
+                font-weight: 600;
+            }
+
+            .input-group input,
+            .input-group select {
+                width: 100%;
+                padding: 10px;
+                border: 2px solid #e2e8f0;
+                border-radius: 8px;
+                font-size: 1rem;
+                transition: border-color 0.3s ease;
+            }
+
+            .input-group input:focus,
+            .input-group select:focus {
+                outline: none;
+                border-color: #4299e1;
+                box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+            }
+
+            #game-log {
+                background: #f7fafc;
+                border-radius: 15px;
+                padding: 20px;
+                max-height: 300px;
+                overflow-y: auto;
+                font-family: 'Courier New', monospace;
+                font-size: 0.9rem;
+                line-height: 1.4;
+                box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .log-entry {
+                margin-bottom: 10px;
+                padding: 8px 12px;
+                background: white;
+                border-radius: 6px;
+                border-left: 4px solid #4299e1;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                animation: slideInRight 0.3s ease;
+            }
+
+            .log-entry.error {
+                border-left-color: #e53e3e;
+                background: #fed7d7;
+            }
+
+            .log-entry.success {
+                border-left-color: #38a169;
+                background: #c6f6d5;
+            }
+
+            @keyframes slideInRight {
+                from {
+                    opacity: 0;
+                    transform: translateX(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            @keyframes cardCreate {
+                0% {
+                    opacity: 0;
+                    transform: scale(0) rotate(180deg);
+                }
+                50% {
+                    opacity: 0.5;
+                    transform: scale(1.2) rotate(90deg);
+                }
+                100% {
+                    opacity: 1;
+                    transform: scale(1) rotate(0deg);
+                }
+            }
+
+            @keyframes deckCreate {
+                0% {
+                    opacity: 0;
+                    transform: scale(0) rotateY(180deg);
+                }
+                50% {
+                    opacity: 0.5;
+                    transform: scale(1.1) rotateY(90deg);
+                }
+                100% {
+                    opacity: 1;
+                    transform: scale(1) rotateY(0deg);
+                }
+            }
+
+            @keyframes zoneCreate {
+                0% {
+                    opacity: 0;
+                    transform: scale(0.8);
+                    border-color: transparent;
+                }
+                50% {
+                    opacity: 0.5;
+                    transform: scale(1.1);
+                    border-color: #48bb78;
+                }
+                100% {
+                    opacity: 1;
+                    transform: scale(1);
+                    border-color: #4a5568;
+                }
+            }
+
+            @keyframes cardMove {
+                0% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.2) translateY(-20px);
+                    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+                }
+                100% {
+                    transform: scale(1);
+                }
+            }
+
+            .card.creating {
+                animation: cardCreate 0.8s ease;
+            }
+
+            .deck.creating {
+                animation: deckCreate 0.8s ease;
+            }
+
+            .zone.creating {
+                animation: zoneCreate 0.6s ease;
+            }
+
+            .card.moving {
+                animation: cardMove 0.6s ease;
+                z-index: 100;
+            }
+
+            .stats-panel {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 15px;
+                margin-top: 20px;
+            }
+
+            .stat-card {
+                background: linear-gradient(145deg, #edf2f7, #e2e8f0);
+                padding: 15px;
+                border-radius: 10px;
+                text-align: center;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+                font-weight: bold;
+                color: #2d3748;
+            }
+
+            .stat-label {
+                font-size: 0.8rem;
+                color: #718096;
+                margin-top: 5px;
+            }
+
+            .floating-notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #48bb78;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                z-index: 1000;
+            }
+
+            .floating-notification.show {
+                transform: translateX(0);
+            }
+
+            .floating-notification.error {
+                background: #e53e3e;
+                box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+            }
+
+            @media (max-width: 768px) {
+                .game-area {
+                    grid-template-columns: 1fr;
+                }
+                
+                .stats-panel {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+                
+                h1 {
+                    font-size: 2rem;
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="container">
+            <h1>✨ Fancy Game Engine Tester</h1>
+            
+            <div class="game-area">
+                <div class="controls-panel">
+                    <h2>🎯 Engine Controls</h2>
+                    <div class="button-group">
+                        <button id="create-player" onclick="handleCreatePlayer()">
+                            👤 Create Player
+                        </button>
+                        <button id="create-zone" onclick="handleCreateZone()">
+                            🏠 Create Zone
+                        </button>
+                        <button id="create-card" onclick="handleCreateCard()">
+                            🃏 Create Card
+                        </button>
+                        <button id="create-deck" onclick="handleCreateDeck()">
+                            🎴 Create Deck
+                        </button>
+                        <button id="move-card-to-zone" onclick="handleMoveCardToZone()">
+                            ➡️ Move Card to Zone
+                        </button>
+                        <button id="shuffle-deck" onclick="handleShuffleDeck()">
+                            🔀 Shuffle Deck
+                        </button>
+                        <button id="reset-game" onclick="handleResetGame()">
+                            🔄 Reset Game
+                        </button>
+                    </div>
+                    
+                    <div class="stats-panel">
+                        <div class="stat-card">
+                            <div class="stat-value" id="player-count">0</div>
+                            <div class="stat-label">Players</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="zone-count">0</div>
+                            <div class="stat-label">Zones</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="card-count">0</div>
+                            <div class="stat-label">Cards</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="deck-count">0</div>
+                            <div class="stat-label">Decks</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="visualization-area">
+                    <h2>🎲 Game Visualization (Click zones to edit coordinates!)</h2>
+                    <div id="game-board"></div>
+                </div>
+            </div>
+            
+            <div id="game-log">
+                <h3>📋 Game Log</h3>
+                <div id="log-entries"></div>
+            </div>
+        </div>
+        
+        <div id="floating-notification" class="floating-notification"></div>
+
+        <!-- Modal for user input -->
+        <div id="input-modal" class="modal">
+            <div class="modal-content">
+                <h3 id="modal-title">Modal Title</h3>
+                <div id="modal-body">Modal Content</div>
+                <div class="modal-buttons">
+                    <button class="modal-button secondary" onclick="closeModal()">Cancel</button>
+                    <button class="modal-button primary" onclick="confirmModal()">Confirm</button>
+                </div>
+            </div>
+        </div>
+
+        <script src="card-game-engine.js"></script>
+        <script src="simple-card-game-script.js"></script>
+        <script>
+            // Enhanced Fancy Game Engine Tester with Prompts and Drag-and-Drop
+            const engine = new GameEngine();
+            
+            // Global state
+            let currentPlayers = [];
+            let currentZones = [];
+            let currentCards = [];
+            let currentDecks = [];
+            let nextZonePosition = { x: 50, y: 50 };
+            let nextCardPosition = { x: 20, y: 20 };
+            let nextDeckPosition = { x: 200, y: 50 };
+            
+            // Modal state
+            let currentModalResolver = null;
+
+            // Utility functions
+            function updateStats() {
+                document.getElementById('player-count').textContent = currentPlayers.length;
+                document.getElementById('zone-count').textContent = currentZones.length;
+                document.getElementById('card-count').textContent = currentCards.length;
+                document.getElementById('deck-count').textContent = currentDecks.length;
+            }
+
+            function log(message, type = 'info', data = null) {
+                const logContainer = document.getElementById("log-entries");
+                const time = new Date().toLocaleTimeString();
+                const entry = document.createElement("div");
+                
+                entry.className = `log-entry ${type}`;
+                entry.innerHTML = `<strong>[${time}]</strong> ${message}`;
+                
+                if (data) {
+                    const pre = document.createElement("pre");
+                    pre.textContent = JSON.stringify(data, null, 2);
+                    pre.style.marginTop = '8px';
+                    pre.style.fontSize = '0.8rem';
+                    entry.appendChild(pre);
+                }
+
+                logContainer.appendChild(entry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+
+            function showNotification(message, type = 'success') {
+                const notification = document.getElementById('floating-notification');
+                notification.textContent = message;
+                notification.className = `floating-notification ${type} show`;
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+
+            // Modal functions
+            function showModal(title, content) {
+                return new Promise((resolve) => {
+                    document.getElementById('modal-title').textContent = title;
+                    document.getElementById('modal-body').innerHTML = content;
+                    document.getElementById('input-modal').style.display = 'block';
+                    currentModalResolver = resolve;
+                });
+            }
+
+            function closeModal() {
+                document.getElementById('input-modal').style.display = 'none';
+                if (currentModalResolver) {
+                    currentModalResolver(null);
+                    currentModalResolver = null;
+                }
+            }
+
+            function confirmModal() {
+                if (currentModalResolver) {
+                    // Collect all input values
+                    const inputs = document.querySelectorAll('#modal-body input, #modal-body select');
+                    const selectedItems = document.querySelectorAll('#modal-body .selection-item.selected');
+                    
+                    const result = {};
+                    
+                    // Get input values
+                    inputs.forEach(input => {
+                        if (input.name) {
+                            result[input.name] = input.type === 'number' ? parseFloat(input.value) : input.value;
+                        }
+                    });
+                    
+                    // Get selected items
+                    if (selectedItems.length > 0) {
+                        result.selected = Array.from(selectedItems).map(item => JSON.parse(item.dataset.value));
+                    }
+                    
+                    currentModalResolver(result);
+                    currentModalResolver = null;
+                }
+                closeModal();
+            }
+
+            // Selection helper
+            function setupSelection(containerSelector) {
+                document.addEventListener('click', (e) => {
+                    if (e.target.matches(`${containerSelector} .selection-item`)) {
+                        // Toggle selection
+                        e.target.classList.toggle('selected');
+                    }
+                });
+            }
+
+            // Zone coordinate editing functionality
+            function setupZoneClickToEdit() {
+                document.addEventListener('click', (e) => {
+                    if (e.target.closest('.zone')) {
+                        const zoneElement = e.target.closest('.zone');
+                        const zoneId = parseInt(zoneElement.id.replace('zone-', ''));
+                        const zone = currentZones.find(z => z.id === zoneId);
+                        
+                        if (zone) {
+                            handleEditZoneCoordinates(zone, zoneElement);
+                        }
+                    }
+                });
+            }
+
+            async function handleEditZoneCoordinates(zone, zoneElement) {
+                try {
+                    const currentX = zone.x || 0;
+                    const currentY = zone.y || 0;
+                    
+                    const modalContent = `
+                        <div class="input-group">
+                            <label>X Position:</label>
+                            <input type="number" name="x" value="${currentX}" min="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Y Position:</label>
+                            <input type="number" name="y" value="${currentY}" min="0">
+                        </div>
+                    `;
+                    
+                    const result = await showModal(`Edit Zone ${zone.id} Coordinates`, modalContent);
+                    if (result === null) return;
+                    
+                    const newX = result.x || 0;
+                    const newY = result.y || 0;
+                    
+                    // Update zone object
+                    zone.x = newX;
+                    zone.y = newY;
+                    
+                    // Update visual position
+                    zoneElement.style.left = newX + 'px';
+                    zoneElement.style.top = newY + 'px';
+                    
+                    // Update coordinates display
+                    updateZoneCoordinates(zoneElement, newX, newY);
+                    
+                    // Update associated cards and decks
+                    updateZoneContents(zoneElement, newX, newY);
+                    
+                    log(`Zone ${zone.id} moved to (${newX}, ${newY})`, 'success');
+                    showNotification(`Zone ${zone.id} coordinates updated!`);
+                } catch (err) {
+                    log("Failed to edit zone coordinates", 'error', { error: err.message });
+                    showNotification("Failed to update coordinates", 'error');
+                }
+            }
+
+            // Update cards and decks when their zone moves
+            function updateZoneContents(zoneElement, newX, newY) {
+                const zoneId = parseInt(zoneElement.id.replace('zone-', ''));
+                
+                // Cards inside the zone are handled by CSS flexbox layout automatically
+                // No need to manually position them as they're in the zone-cards container
+                
+                // Update decks assigned to this zone
+                const zone = currentZones.find(z => z.id === zoneId);
+                if (zone) {
+                    currentDecks.forEach(deck => {
+                        if (deck.assignedZone && deck.assignedZone.id === zoneId) {
+                            const deckElement = document.getElementById(`deck-${deck.id}`);
+                            if (deckElement) {
+                                deckElement.style.left = (newX + 10) + 'px';
+                                deckElement.style.top = (newY + 10) + 'px';
+                            }
+                        }
+                    });
+                    
+                    // Update standalone cards assigned to this zone
+                    currentCards.forEach(card => {
+                        if (card.assignedZone && card.assignedZone.id === zoneId) {
+                            const cardElement = document.getElementById(`card-${card.id}`);
+                            if (cardElement && cardElement.parentElement.id === 'game-board') {
+                                cardElement.style.left = (newX + 5) + 'px';
+                                cardElement.style.top = (newY + 5) + 'px';
+                            }
+                        }
+                    });
+                }
+            }
+
+            // Function to arrange cards in a zone side by side
+            function arrangeCardsInZone(zoneElement) {
+                const zoneCardsContainer = zoneElement.querySelector('.zone-cards');
+                const cards = Array.from(zoneCardsContainer.children);
+                
+                // Just ensure proper spacing - CSS flexbox handles the layout
+                cards.forEach((card, index) => {
+                    card.style.zIndex = index + 1;
+                });
+            }
+
+            // Function to check for card overlapping and fix positioning
+            function checkAndFixCardOverlapping() {
+                const gameBoard = document.getElementById('game-board');
+                const standaloneCards = gameBoard.querySelectorAll('.card');
+                
+                // Only check cards that are directly on the game board (not in zones)
+                const boardCards = Array.from(standaloneCards).filter(card => 
+                    card.parentElement.id === 'game-board'
+                );
+                
+                boardCards.forEach((card, index) => {
+                    if (index === 0) return; // Skip first card
+                    
+                    // Check if this card overlaps with any previous card
+                    const cardRect = card.getBoundingClientRect();
+                    let hasOverlap = false;
+                    
+                    for (let i = 0; i < index; i++) {
+                        const otherCard = boardCards[i];
+                        const otherRect = otherCard.getBoundingClientRect();
+                        
+                        // Check for overlap
+                        if (!(cardRect.right < otherRect.left || 
+                              cardRect.left > otherRect.right || 
+                              cardRect.bottom < otherRect.top || 
+                              cardRect.top > otherRect.bottom)) {
+                            hasOverlap = true;
+                            break;
+                        }
+                    }
+                    
+                    if (hasOverlap) {
+                        // Move card to avoid overlap
+                        const currentLeft = parseFloat(card.style.left) || 0;
+                        const currentTop = parseFloat(card.style.top) || 0;
+                        
+                        // Try moving right first, then down if needed
+                        let newLeft = currentLeft + 70;
+                        let newTop = currentTop;
+                        
+                        // If moving right goes off screen, move to next row
+                        if (newLeft + 60 > gameBoard.offsetWidth) {
+                            newLeft = nextCardPosition.x;
+                            newTop = currentTop + 94;
+                        }
+                        
+                        card.style.left = newLeft + 'px';
+                        card.style.top = newTop + 'px';
+                        
+                        log(`Moved overlapping card ${card.id} to (${newLeft}, ${newTop})`, 'info');
+                    }
+                });
+            }
+
+            function updateZoneCoordinates(zoneElement, x, y) {
+                let coordsElement = zoneElement.querySelector('.zone-coordinates');
+                if (!coordsElement) {
+                    coordsElement = document.createElement('div');
+                    coordsElement.className = 'zone-coordinates';
+                    zoneElement.appendChild(coordsElement);
+                }
+                coordsElement.textContent = `(${Math.round(x)}, ${Math.round(y)})`;
+            }
+
+            function createVisualZone(zone, index) {
+                const gameBoard = document.getElementById('game-board');
+                const zoneElement = document.createElement('div');
+                
+                zoneElement.className = 'zone creating';
+                zoneElement.id = `zone-${zone.id}`;
+                zoneElement.innerHTML = `
+                    <div class="zone-label">Zone ${zone.id} (Player ${zone.owner.id})</div>
+                    <div class="zone-cards" id="zone-cards-${zone.id}"></div>
+                `;
+                
+                // Position zones to avoid overlap
+                const position = {
+                    x: zone.x || (nextZonePosition.x + (index % 3) * 140),
+                    y: zone.y || (nextZonePosition.y + Math.floor(index / 3) * 100)
+                };
+                
+                zoneElement.style.left = position.x + 'px';
+                zoneElement.style.top = position.y + 'px';
+                zoneElement.style.width = zone.width + 'px';
+                zoneElement.style.height = zone.length + 'px';
+                
+                // Add coordinates display
+                updateZoneCoordinates(zoneElement, position.x, position.y);
+                
+                gameBoard.appendChild(zoneElement);
+                
+                // Remove creating animation class after animation completes
+                setTimeout(() => {
+                    zoneElement.classList.remove('creating');
+                }, 600);
+                
+                return zoneElement;
+            }
+
+            function createVisualCard(card, index, assignedZone = null) {
+                const gameBoard = document.getElementById('game-board');
+                const cardElement = document.createElement('div');
+                
+                cardElement.className = 'card creating';
+                cardElement.id = `card-${card.id}`;
+                cardElement.textContent = card.displayName || `Card ${card.id}`;
+                
+                if (assignedZone) {
+                    // Position card relative to assigned zone
+                    const position = {
+                        x: (assignedZone.x || 0) + 5,
+                        y: (assignedZone.y || 0) + 5
+                    };
+                    
+                    cardElement.style.left = position.x + 'px';
+                    cardElement.style.top = position.y + 'px';
+                } else {
+                    // Position cards in a staggered pattern
+                    const position = {
+                        x: nextCardPosition.x + (index % 5) * 70,
+                        y: nextCardPosition.y + Math.floor(index / 5) * 30
+                    };
+                    
+                    cardElement.style.left = position.x + 'px';
+                    cardElement.style.top = position.y + 'px';
+                }
+                
+                // Add click handler for selection
+                cardElement.addEventListener('click', () => {
+                    document.querySelectorAll('.card.selected').forEach(c => c.classList.remove('selected'));
+                    cardElement.classList.add('selected');
+                });
+                
+                gameBoard.appendChild(cardElement);
+                
+                // Remove creating animation class after animation completes
+                setTimeout(() => {
+                    cardElement.classList.remove('creating');
+                }, 800);
+                
+                return cardElement;
+            }
+
+            function createVisualCardInZone(card, zone) {
+                const zoneElement = document.getElementById(`zone-${zone.id}`);
+                const zoneCardsContainer = document.getElementById(`zone-cards-${zone.id}`);
+                
+                if (!zoneElement || !zoneCardsContainer) {
+                    log(`Zone ${zone.id} not found, creating card on board instead`, 'warning');
+                    return createVisualCard(card, currentCards.length - 1);
+                }
+                
+                // Create card element
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card creating';
+                cardElement.id = `card-${card.id}`;
+                cardElement.textContent = card.displayName || `Card ${card.id}`;
+                
+                // Set card styles for zone container
+                cardElement.style.position = 'relative';
+                cardElement.style.left = '0px';
+                cardElement.style.top = '0px';
+                cardElement.style.margin = '0';
+                cardElement.style.display = 'block';
+                
+                // Add click handler for selection
+                cardElement.addEventListener('click', () => {
+                    document.querySelectorAll('.card.selected').forEach(c => c.classList.remove('selected'));
+                    cardElement.classList.add('selected');
+                });
+                
+                // Add to zone container
+                zoneCardsContainer.appendChild(cardElement);
+                
+                // Remove creating animation class after animation completes
+                setTimeout(() => {
+                    cardElement.classList.remove('creating');
+                    arrangeCardsInZone(zoneElement);
+                }, 800);
+                
+                return cardElement;
+            }
+
+            function createVisualDeck(deck, index, assignedZone = null) {
+                const gameBoard = document.getElementById('game-board');
+                const deckElement = document.createElement('div');
+                
+                deckElement.className = 'deck creating';
+                deckElement.id = `deck-${deck.id}`;
+                deckElement.innerHTML = `
+                    <div>Deck</div>
+                    <div style="font-size: 0.6rem;">${deck.cards.length} cards</div>
+                `;
+                
+                if (assignedZone) {
+                    // Position deck relative to assigned zone
+                    const position = {
+                        x: (assignedZone.x || 0) + 10,
+                        y: (assignedZone.y || 0) + 10
+                    };
+                    
+                    deckElement.style.left = position.x + 'px';
+                    deckElement.style.top = position.y + 'px';
+                } else {
+                    // Position decks in default pattern
+                    const position = {
+                        x: nextDeckPosition.x + (index % 3) * 100,
+                        y: nextDeckPosition.y + Math.floor(index / 3) * 120
+                    };
+                    
+                    deckElement.style.left = position.x + 'px';
+                    deckElement.style.top = position.y + 'px';
+                }
+                
+                // Add click handler for selection
+                deckElement.addEventListener('click', () => {
+                    document.querySelectorAll('.deck.selected').forEach(d => d.classList.remove('selected'));
+                    deckElement.classList.add('selected');
+                });
+                
+                gameBoard.appendChild(deckElement);
+                
+                // Remove creating animation class after animation completes
+                setTimeout(() => {
+                    deckElement.classList.remove('creating');
+                }, 800);
+                
+                return deckElement;
+            }
+
+            function animateCardMovement(cardElement, fromPos, toPos, callback) {
+                cardElement.classList.add('moving');
+                
+                // Animate to destination
+                cardElement.style.transition = 'all 0.6s ease';
+                cardElement.style.left = toPos.x + 'px';
+                cardElement.style.top = toPos.y + 'px';
+                
+                setTimeout(() => {
+                    cardElement.classList.remove('moving');
+                    if (callback) callback();
+                }, 600);
+            }
+
+            // Enhanced Handler functions with prompts
+            function handleCreatePlayer() {
+                try {
+                    const playerName = prompt("Enter player name (optional):");
+                    const player = engine.createPlayer();
+                    if (playerName) {
+                        player.name = playerName;
+                    }
+                    currentPlayers.push(player);
+                    updateStats();
+                    log(`Player created with ID: ${player.id}${playerName ? ` (${playerName})` : ''}`, 'success', player);
+                    showNotification(`Player ${player.id} created!`);
+                } catch (err) {
+                    log("createPlayer() failed", 'error', { error: err.message });
+                    showNotification("Failed to create player", 'error');
+                }
+            }
+
+            async function handleCreateZone() {
+                try {
+                    if (currentPlayers.length === 0) {
+                        throw new Error("Create a player first!");
+                    }
+                    
+                    // Create player selection
+                    const playerOptions = currentPlayers.map(p => 
+                        `<div class="selection-item" data-value='${JSON.stringify(p)}'>
+                            Player ${p.id}${p.name ? ` (${p.name})` : ''}
+                        </div>`
+                    ).join('');
+                    
+                    const modalContent = `
+                        <div class="input-group">
+                            <label>Select Player:</label>
+                            <div class="selection-grid">${playerOptions}</div>
+                        </div>
+                        <div class="input-group">
+                            <label>X Position:</label>
+                            <input type="number" name="x" value="${nextZonePosition.x}" min="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Y Position:</label>
+                            <input type="number" name="y" value="${nextZonePosition.y}" min="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Width:</label>
+                            <input type="number" name="width" value="120" min="50">
+                        </div>
+                        <div class="input-group">
+                            <label>Height:</label>
+                            <input type="number" name="height" value="80" min="50">
+                        </div>
+                        <div class="input-group">
+                            <label>Face Up:</label>
+                            <select name="faceUp">
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                    `;
+                    
+                    const result = await showModal("Create Zone", modalContent);
+                    if (!result || !result.selected || result.selected.length === 0) {
+                        return;
+                    }
+                    
+                    const selectedPlayer = result.selected[0];
+                    const zone = engine.createZone(
+                        selectedPlayer,
+                        result.x,
+                        result.y,
+                        result.height,
+                        result.width,
+                        false,
+                        result.faceUp === 'true'
+                    );
+                    
+                    // Store the coordinates in the zone object
+                    zone.x = result.x;
+                    zone.y = result.y;
+                    
+                    currentZones.push(zone);
+                    createVisualZone(zone, currentZones.length - 1);
+                    updateStats();
+                    
+                    log(`Zone created with ID: ${zone.id} for Player ${selectedPlayer.id} at (${result.x}, ${result.y})`, 'success', zone);
+                    showNotification(`Zone ${zone.id} created!`);
+                } catch (err) {
+                    log("createZone() failed", 'error', { error: err.message });
+                    showNotification(err.message, 'error');
+                }
+            }
+
+            async function handleCreateCard() {
+                try {
+                    const zoneOptions = currentZones.length > 0 ? currentZones.map(z => 
+                        `<div class="selection-item" data-value='${JSON.stringify(z)}'>
+                            Zone ${z.id} (Player ${z.owner.id})
+                        </div>`
+                    ).join('') : '<div style="color: #718096; text-align: center;">No zones available</div>';
+                    
+                    const modalContent = `
+                        <div class="input-group">
+                            <label>Card Name (optional):</label>
+                            <input type="text" name="name" placeholder="e.g., Ace of Spades">
+                        </div>
+                        <div class="input-group">
+                            <label>Suit (optional):</label>
+                            <select name="suit">
+                                <option value="">None</option>
+                                <option value="hearts">Hearts</option>
+                                <option value="diamonds">Diamonds</option>
+                                <option value="clubs">Clubs</option>
+                                <option value="spades">Spades</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Rank (optional):</label>
+                            <input type="text" name="rank" placeholder="e.g., A, 2, 3, J, Q, K">
+                        </div>
+                        <div class="input-group">
+                            <label>Value (optional):</label>
+                            <input type="number" name="value" placeholder="1-13" min="1" max="13">
+                        </div>
+                        <div class="input-group">
+                            <label>Assign to Zone (optional):</label>
+                            <div class="selection-grid">${zoneOptions}</div>
+                        </div>
+                    `;
+                    
+                    const result = await showModal("Create Card", modalContent);
+                    if (result === null) return;
+                    
+                    const card = engine.createCard();
+                    if (result.name) card.displayName = result.name;
+                    if (result.suit) card.suit = result.suit;
+                    if (result.rank) card.rank = result.rank;
+                    if (result.value) card.value = result.value;
+                    
+                    // Assign to zone if selected
+                    if (result.selected && result.selected.length > 0) {
+                        const selectedZone = result.selected[0];
+                        card.assignedZone = selectedZone;
+                        
+                        // Create card and add it directly to the zone's container
+                        currentCards.push(card);
+                        createVisualCardInZone(card, selectedZone);
+                        
+                        // Move card to zone in the game engine
+                        engine.moveCardToZone(card, null, selectedZone, true);
+                        
+                        log(`Card created with ID: ${card.id}${card.displayName ? ` (${card.displayName})` : ''} and assigned to Zone ${selectedZone.id}`, 'success', card);
+                    } else {
+                        // Create card without zone assignment
+                        currentCards.push(card);
+                        createVisualCard(card, currentCards.length - 1);
+                        
+                        log(`Card created with ID: ${card.id}${card.displayName ? ` (${card.displayName})` : ''}`, 'success', card);
+                    }
+                    
+                    updateStats();
+                    
+                    // Check for overlapping cards and fix positioning
+                    setTimeout(() => {
+                        checkAndFixCardOverlapping();
+                    }, 100);
+                    
+                    showNotification(`Card ${card.id} created!`);
+                } catch (err) {
+                    log("createCard() failed", 'error', { error: err.message });
+                    showNotification("Failed to create card", 'error');
+                }
+            }
+
+            // Helper function to create standard 52-card deck
+            function createStandardCards() {
+                const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+                const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+                const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+                
+                const standardCards = [];
+                
+                for (let suit of suits) {
+                    for (let i = 0; i < ranks.length; i++) {
+                        const card = engine.createCard();
+                        card.suit = suit;
+                        card.rank = ranks[i];
+                        card.value = values[i];
+                        card.displayName = `${ranks[i]} of ${suit}`;
+                        standardCards.push(card);
+                        currentCards.push(card);
+                    }
+                }
+                
+                return standardCards;
+            }
+
+            async function handleCreateDeck() {
+                try {
+                    if (currentPlayers.length === 0) {
+                        throw new Error("Create a player first!");
+                    }
+                    if (currentZones.length === 0) {
+                        throw new Error("Create a zone first!");
+                    }
+                    
+                    const playerOptions = currentPlayers.map(p => 
+                        `<div class="selection-item" data-value='${JSON.stringify(p)}'>
+                            Player ${p.id}${p.name ? ` (${p.name})` : ''}
+                        </div>`
+                    ).join('');
+                    
+                    const zoneOptions = currentZones.map(z => 
+                        `<div class="selection-item" data-value='${JSON.stringify(z)}'>
+                            Zone ${z.id} (Player ${z.owner.id})
+                        </div>`
+                    ).join('');
+                    
+                    const cardOptions = currentCards.map(c => 
+                        `<div class="selection-item" data-value='${JSON.stringify(c)}'>
+                            Card ${c.id}${c.displayName ? ` (${c.displayName})` : ''}
+                        </div>`
+                    ).join('');
+                    
+                    const modalContent = `
+                        <div class="input-group">
+                            <label>Select Player:</label>
+                            <div class="selection-grid">${playerOptions}</div>
+                        </div>
+                        <div class="input-group">
+                            <label>Assign to Zone:</label>
+                            <div class="selection-grid">${zoneOptions}</div>
+                        </div>
+                        <div class="input-group">
+                            <label>Deck Type:</label>
+                            <select name="deckType" onchange="toggleCardSelection(this.value)">
+                                <option value="custom">Custom (select existing cards)</option>
+                                <option value="standard52">Standard 52-card deck</option>
+                            </select>
+                        </div>
+                        <div class="input-group" id="card-selection-group">
+                            <label>Select Cards (click multiple):</label>
+                            <div class="selection-grid">${cardOptions}</div>
+                        </div>
+                    `;
+                    
+                    // Add the toggle function to the window scope temporarily
+                    window.toggleCardSelection = function(deckType) {
+                        const cardSelectionGroup = document.getElementById('card-selection-group');
+                        if (deckType === 'standard52') {
+                            cardSelectionGroup.style.display = 'none';
+                        } else {
+                            cardSelectionGroup.style.display = 'block';
+                        }
+                    };
+                    
+                    const result = await showModal("Create Deck", modalContent);
+                    if (!result || !result.selected || result.selected.length < 2) {
+                        return;
+                    }
+                    
+                    const selectedPlayer = result.selected[0];
+                    const selectedZone = result.selected[1];
+                    let selectedCards;
+                    
+                    if (result.deckType === 'standard52') {
+                        // Create standard 52-card deck
+                        selectedCards = createStandardCards();
+                        log(`Created ${selectedCards.length} standard playing cards`, 'info');
+                    } else {
+                        // Use selected existing cards
+                        selectedCards = result.selected.slice(2); // First is player, second is zone, rest are cards
+                        
+                        if (selectedCards.length === 0) {
+                            throw new Error("Select at least one card!");
+                        }
+                    }
+                    
+                    const deck = engine.createDeck(selectedPlayer, selectedCards);
+                    deck.assignedZone = selectedZone;
+                    
+                    currentDecks.push(deck);
+                    createVisualDeck(deck, currentDecks.length - 1, selectedZone);
+                    updateStats();
+                    
+                    log(`Deck created with ID: ${deck.id} for Player ${selectedPlayer.id} with ${selectedCards.length} cards, assigned to Zone ${selectedZone.id}`, 'success', deck);
+                    showNotification(`Deck created with ${deck.cards.length} cards!`);
+                    
+                    // Clean up temporary function
+                    delete window.toggleCardSelection;
+                    
+                } catch (err) {
+                    log("createDeck() failed", 'error', { error: err.message });
+                    showNotification(err.message, 'error');
+                    // Clean up temporary function on error too
+                    delete window.toggleCardSelection;
+                }
+            }
+
+            async function handleMoveCardToZone() {
+                try {
+                    if (currentCards.length === 0) {
+                        throw new Error("Create a card first!");
+                    }
+                    if (currentZones.length === 0) {
+                        throw new Error("Create a zone first!");
+                    }
+                    
+                    const cardOptions = currentCards.map(c => 
+                        `<div class="selection-item" data-value='${JSON.stringify(c)}'>
+                            Card ${c.id}${c.displayName ? ` (${c.displayName})` : ''}
+                        </div>`
+                    ).join('');
+                    
+                    const zoneOptions = currentZones.map(z => 
+                        `<div class="selection-item" data-value='${JSON.stringify(z)}'>
+                            Zone ${z.id} (Player ${z.owner.id})
+                        </div>`
+                    ).join('');
+                    
+                    const modalContent = `
+                        <div class="input-group">
+                            <label>Select Card to Move:</label>
+                            <div class="selection-grid">${cardOptions}</div>
+                        </div>
+                        <div class="input-group">
+                            <label>Select Destination Zone:</label>
+                            <div class="selection-grid">${zoneOptions}</div>
+                        </div>
+                        <div class="input-group">
+                            <label>Face Up:</label>
+                            <select name="faceUp">
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                    `;
+                    
+                    const result = await showModal("Move Card to Zone", modalContent);
+                    if (!result || !result.selected || result.selected.length < 2) {
+                        return;
+                    }
+                    
+                    const selectedCard = result.selected[0];
+                    const selectedZone = result.selected[1];
+                    
+                    // Find if card is currently in a deck
+                    let cardInDeck = null;
+                    for (let deck of currentDecks) {
+                        if (deck.cards.find(c => c.id === selectedCard.id)) {
+                            cardInDeck = deck;
+                            break;
+                        }
+                    }
+                    
+                    let cardElement = document.getElementById(`card-${selectedCard.id}`);
+                    
+                    // If card is in a deck, create a visual representation
+                    if (cardInDeck && !cardElement) {
+                        const gameBoard = document.getElementById('game-board');
+                        cardElement = document.createElement('div');
+                        cardElement.className = 'card';
+                        cardElement.id = `card-${selectedCard.id}`;
+                        cardElement.textContent = selectedCard.displayName || `Card ${selectedCard.id}`;
+                        
+                        // Position card at deck location initially
+                        const deckElement = document.getElementById(`deck-${cardInDeck.id}`);
+                        if (deckElement) {
+                            const deckRect = deckElement.getBoundingClientRect();
+                            const boardRect = gameBoard.getBoundingClientRect();
+                            cardElement.style.left = (deckRect.left - boardRect.left) + 'px';
+                            cardElement.style.top = (deckRect.top - boardRect.top) + 'px';
+                        } else {
+                            // Fallback position
+                            cardElement.style.left = '20px';
+                            cardElement.style.top = '20px';
+                        }
+                        
+                        cardElement.style.position = 'absolute';
+                        gameBoard.appendChild(cardElement);
+                        
+                        // Remove card from deck visually and logically
+                        engine.removeCard(cardInDeck, selectedCard);
+                        log(`Removed card ${selectedCard.id} from deck ${cardInDeck.id}`, 'info');
+                    }
+                    
+                    const zoneElement = document.getElementById(`zone-${selectedZone.id}`);
+                    
+                    if (cardElement && zoneElement) {
+                        const cardRect = cardElement.getBoundingClientRect();
+                        const zoneRect = zoneElement.getBoundingClientRect();
+                        const gameBoard = document.getElementById('game-board');
+                        const boardRect = gameBoard.getBoundingClientRect();
+                        
+                        const fromPos = {
+                            x: cardRect.left - boardRect.left,
+                            y: cardRect.top - boardRect.top
+                        };
+                        
+                        const toPos = {
+                            x: zoneRect.left - boardRect.left + 10,
+                            y: zoneRect.top - boardRect.top + 30
+                        };
+                        
+                        animateCardMovement(cardElement, fromPos, toPos, () => {
+                            // Move card to zone container
+                            const zoneCardsContainer = document.getElementById(`zone-cards-${selectedZone.id}`);
+                            const zoneElement = document.getElementById(`zone-${selectedZone.id}`);
+                            
+                            cardElement.style.position = 'relative';
+                            cardElement.style.left = '0px';
+                            cardElement.style.top = '0px';
+                            cardElement.style.margin = '0';
+                            cardElement.style.display = 'block';
+                            cardElement.style.transition = 'all 0.3s ease';
+                            
+                            zoneCardsContainer.appendChild(cardElement);
+                            
+                            // Arrange cards in zone
+                            setTimeout(() => {
+                                arrangeCardsInZone(zoneElement);
+                            }, 100);
+                        });
+                    } else {
+                        // Fallback: create card directly in zone if no visual element exists
+                        const zoneCardsContainer = document.getElementById(`zone-cards-${selectedZone.id}`);
+                        if (zoneCardsContainer) {
+                            const newCardElement = document.createElement('div');
+                            newCardElement.className = 'card';
+                            newCardElement.id = `card-${selectedCard.id}`;
+                            newCardElement.textContent = selectedCard.displayName || `Card ${selectedCard.id}`;
+                            newCardElement.style.position = 'relative';
+                            newCardElement.style.left = '0px';
+                            newCardElement.style.top = '0px';
+                            newCardElement.style.margin = '0';
+                            
+                            zoneCardsContainer.appendChild(newCardElement);
+                            
+                            setTimeout(() => {
+                                arrangeCardsInZone(zoneElement);
+                            }, 100);
+                        }
+                    }
+                    
+                    engine.moveCardToZone(selectedCard, null, selectedZone, result.faceUp === 'true');
+                    
+                    log(`Card ${selectedCard.id} moved to Zone ${selectedZone.id}`, 'success');
+                    showNotification(`Card moved to zone!`);
+                } catch (err) {
+                    log("moveCardToZone() failed", 'error', { error: err.message });
+                    showNotification(err.message, 'error');
+                }
+            }
+
+            async function handleShuffleDeck() {
+                try {
+                    if (currentDecks.length === 0) {
+                        throw new Error("Create a deck first!");
+                    }
+                    
+                    const deckOptions = currentDecks.map(d => 
+                        `<div class="selection-item" data-value='${JSON.stringify(d)}'>
+                            Deck ${d.id} (${d.cards.length} cards)
+                        </div>`
+                    ).join('');
+                    
+                    const modalContent = `
+                        <div class="input-group">
+                            <label>Select Deck to Shuffle:</label>
+                            <div class="selection-grid">${deckOptions}</div>
+                        </div>
+                    `;
+                    
+                    const result = await showModal("Shuffle Deck", modalContent);
+                    if (!result || !result.selected || result.selected.length === 0) {
+                        return;
+                    }
+                    
+                    const selectedDeck = result.selected[0];
+                    const deckElement = document.getElementById(`deck-${selectedDeck.id}`);
+                    
+                    // Add shuffle animation
+                    if (deckElement) {
+                        deckElement.style.animation = 'cardMove 0.8s ease 3';
+                        setTimeout(() => {
+                            deckElement.style.animation = '';
+                        }, 2400);
+                    }
+                    
+                    // Shuffle the deck cards
+                    engine.shuffleDeck(selectedDeck);
+                    
+                    log(`Deck ${selectedDeck.id} shuffled`, 'success');
+                    showNotification(`Deck shuffled!`);
+                } catch (err) {
+                    log("shuffleDeck() failed", 'error', { error: err.message });
+                    showNotification(err.message, 'error');
+                }
+            }
+
+            function handleResetGame() {
+                if (confirm("Are you sure you want to reset the entire game? This will clear all players, zones, cards, and decks.")) {
+                    try {
+                        // Clear all arrays
+                        currentPlayers.length = 0;
+                        currentZones.length = 0;
+                        currentCards.length = 0;
+                        currentDecks.length = 0;
+                        
+                        // Clear visual elements
+                        document.getElementById('game-board').innerHTML = '';
+                        document.getElementById('log-entries').innerHTML = '';
+                        
+                        // Reset positions
+                        nextZonePosition = { x: 50, y: 50 };
+                        nextCardPosition = { x: 20, y: 20 };
+                        nextDeckPosition = { x: 200, y: 50 };
+                        
+                        updateStats();
+                        log("Game reset completed", 'success');
+                        showNotification("Game reset!");
+                    } catch (err) {
+                        log("reset() failed", 'error', { error: err.message });
+                        showNotification("Failed to reset game", 'error');
+                    }
+                }
+            }
+
+            // Make functions available globally for War game integration
+            window.log = log;
+            window.showNotification = showNotification;
+            
+            // Initialize
+            setupSelection('#modal-body');
+            setupZoneClickToEdit();
+            updateStats();
+            log("Fancy Game Engine Tester initialized", 'success');
+        </script>
+    </body>
+</html>
