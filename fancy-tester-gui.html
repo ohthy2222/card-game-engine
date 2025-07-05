@@ -168,22 +168,18 @@
             }
 
             .zone-cards {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px;
-                align-items: flex-start;
-                justify-content: flex-start;
+                position: relative;
+                width: 100%;
+                height: calc(100% - 25px);
                 pointer-events: none;
                 margin-top: 5px;
+                overflow: hidden;
             }
 
             .zone-cards .card {
-                position: relative !important;
-                left: 0 !important;
-                top: 0 !important;
-                margin: 0 !important;
+                position: absolute !important;
                 pointer-events: auto;
-                flex-shrink: 0;
+                transition: all 0.3s ease;
             }
 
             .zone-cards .card:hover {
@@ -878,14 +874,54 @@
                 }
             }
 
-            // Function to arrange cards in a zone side by side
+            // Function to arrange cards in a zone with overlapping when needed
             function arrangeCardsInZone(zoneElement) {
                 const zoneCardsContainer = zoneElement.querySelector('.zone-cards');
                 const cards = Array.from(zoneCardsContainer.children);
                 
-                // Just ensure proper spacing - CSS flexbox handles the layout
+                if (cards.length === 0) return;
+                
+                // Get zone dimensions
+                const zoneWidth = zoneElement.offsetWidth - 20; // Account for padding
+                const zoneHeight = zoneElement.offsetHeight - 40; // Account for padding and label
+                
+                // Card dimensions
+                const cardWidth = 60;
+                const cardHeight = 84;
+                
+                // Calculate how many cards can fit side by side
+                const cardsPerRow = Math.floor(zoneWidth / (cardWidth + 8)); // 8px gap
+                const maxVisibleCards = cardsPerRow * Math.floor(zoneHeight / (cardHeight + 8));
+                
                 cards.forEach((card, index) => {
-                    card.style.zIndex = index + 1;
+                    if (cards.length <= maxVisibleCards) {
+                        // Normal spacing when cards fit
+                        const row = Math.floor(index / cardsPerRow);
+                        const col = index % cardsPerRow;
+                        
+                        card.style.left = (col * (cardWidth + 8)) + 'px';
+                        card.style.top = (row * (cardHeight + 8)) + 'px';
+                        card.style.zIndex = index + 1;
+                    } else {
+                        // Overlapping when too many cards
+                        const offsetX = Math.min(index * 3, zoneWidth - cardWidth); // Slight horizontal offset
+                        const offsetY = Math.min(index * 2, zoneHeight - cardHeight); // Slight vertical offset
+                        
+                        card.style.left = offsetX + 'px';
+                        card.style.top = offsetY + 'px';
+                        card.style.zIndex = index + 1; // Newest cards on top
+                    }
+                    
+                    // Enhanced hover effect for overlapped cards
+                    card.addEventListener('mouseenter', () => {
+                        card.style.transform = 'scale(1.1)';
+                        card.style.zIndex = '1000';
+                    });
+                    
+                    card.addEventListener('mouseleave', () => {
+                        card.style.transform = 'scale(1)';
+                        card.style.zIndex = index + 1;
+                    });
                 });
             }
 
@@ -1047,8 +1083,8 @@
                 cardElement.id = `card-${card.id}`;
                 cardElement.textContent = card.displayName || `Card ${card.id}`;
                 
-                // Set card styles for zone container
-                cardElement.style.position = 'relative';
+                // Set card styles for zone container (positioning will be handled by arrangeCardsInZone)
+                cardElement.style.position = 'absolute';
                 cardElement.style.left = '0px';
                 cardElement.style.top = '0px';
                 cardElement.style.margin = '0';
@@ -1062,6 +1098,11 @@
                 
                 // Add to zone container
                 zoneCardsContainer.appendChild(cardElement);
+                
+                // Arrange cards immediately for proper positioning
+                setTimeout(() => {
+                    arrangeCardsInZone(zoneElement);
+                }, 10);
                 
                 // Remove creating animation class after animation completes
                 setTimeout(() => {
@@ -1708,7 +1749,13 @@
                 }
             }
 
-            // Make functions available globally for War game integration
+            // Make functions and objects available globally for War game integration
+            window.engine = engine;
+            window.currentPlayers = currentPlayers;
+            window.currentZones = currentZones;
+            window.currentCards = currentCards;
+            window.currentDecks = currentDecks;
+            window.updateStats = updateStats;
             window.log = log;
             window.showNotification = showNotification;
             
