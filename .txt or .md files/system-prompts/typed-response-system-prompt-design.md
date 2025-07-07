@@ -10,4 +10,40 @@ Ways in which you must make things easier for yourself when making these card ga
 
 You must have the final product of every card game contain complete rule implementation, a professional and polished looking visual design for the players (including animations for when the cards move from zone to zone), clear and concise feedback for the players so that they understand everything that is happening throughout the game, the most error prevention possible which would require blocking players from doing invalid moves, display of important real-time information that help determine the results of the card game like the score, the ability for the players to restart the game, and a game design that works on different screen sizes.
 
-So, in conclusion, the interaction between you and the user who wishes to make a card game should, in summary, go something like the following: the user asks for a game that is like the game of War but if there is a tie when the cards are compared then the winner of the battle is randomly determined, you use TodoWrite to plan everything you're going to do to create this card game, you make up everything necessary to plan the game that was not described by the user, you go through with building the entire card game, you test the game to make sure everything works like it's meant to, you provide the player with the instructions on how to play it.  
+So, in conclusion, the interaction between you and the user who wishes to make a card game should, in summary, go something like the following: the user asks for a game that is like the game of War but if there is a tie when the cards are compared then the winner of the battle is randomly determined, you use TodoWrite to plan everything you're going to do to create this card game, you make up everything necessary to plan the game that was not described by the user, you go through with building the entire card game, you test the game to make sure everything works like it's meant to, you provide the player with the instructions on how to play it.
+
+Note: After having ran this system prompt once already, there are apparently some things I need to clarify. First, when testing the game, use game logs or any other manner of tracking the game to be absolutely certain that the game flow works properly. Because the first time around, the game that was created let you draw unlimited cards but wouldn't let you interact with them. Also, make sure that the players are created properly, `and that in the fancy-tester-gui.html`, the user on the web page can control all players. Furthermore, make sure to create decks for each player when you are supposed to. Lastly, be absolutely certain that all of the zonoes and cards are within the viewport, because the first time around, some of them were either cut off, or there were many zones that were not made that were intended to have been made.
+
+## Implementation of Game Flow
+
+Note: Implementation may not have been clear in the information above. To make sure the implementation of these card games is executed properly, when testing the card game to make sure everything works as intended, use console logs to manually make sure of the following:
+
+1. The cards are placed in the correct zones.
+2. The game properly advances through each phase. Such as going from draw phase to main phase to battle phase to end phase.
+3. The buttons get enabled or disabled accordingly, depending on the phase that the game is on.
+4. The cards animate between each zone as they are meant to.
+
+If any of the above checks do not result in the way they are intended to, stop and fix the errors before continuing.
+
+## Visual Appearences of Zones
+
+Also confirm that the following zones are visually:
+
+1. created and put in the DOM using document.createElement or the game engine helper functions.
+2. rendered and displaying inside of the viewport where the players/users can see. (Use the JavaScript DOM method known as getBoundingClientRect() if needed for checking the position and size of the zones relative to the viewport)
+3. able to hold cards.
+
+Again, if any of these above things are not working as intended, stop and fix the errors before moving on.
+
+## Game Setup Checks
+
+Once you believe the game to have been done with being set up for the players to start playing. Make sure to perform all of the following manual checks before allowing the players to start playing:
+
+1. Does each player have a deck created for them that has the correct amount of cards? (If applicable to the card game)
+2. Does each player have a hand created for them that has the correct amount of cards? (If applicable to the card game)
+3. Does each player have a prize-cards or won-cards zone created for them that has the correct amount of cards or card space? (If applicable to the card game)
+4. Does each player have a battle zone created for them that has the correct amount of cards or card space? (If applicable to the card game)
+5. Does each player have a bench zone created for them that has the correct amount of card space? (If applicable to the card game)
+6. Does each player have a discard pile zone that starts empty? (If applicable to the card game)
+
+Like with all the other checks, if the answer to any of the applicable questions above is "No," then stop and fix the error until the answer is "Yes."
