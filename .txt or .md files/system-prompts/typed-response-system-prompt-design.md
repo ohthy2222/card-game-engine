@@ -23,7 +23,17 @@ Note: Implementation may not have been clear in the information above. To make s
 3. The buttons get enabled or disabled accordingly, depending on the phase that the game is on.
 4. The cards animate between each zone as they are meant to.
 
-If any of the above checks do not result in the way they are intended to, stop and fix the errors before continuing.
+If any of the above checks do not result in the way they are intended to, stop and fix the errors before continuing. And also make sure to force DOM re-rendering after all card movements, not just only changing the game's internal state.
+
+## Card Movements
+
+After every card animation/movement it is mandatory that you do the following:
+
+1. Update the cards[] array accordingly in the data model of the target zone. This way, we prevent the UI from showing cards that it's not supposed to.
+2. Create and call a renderZone(zoneId) or refreshZoneVisual(zone) function that does the following:
+    a. Gets rid of the old content in the zone's HTML container and repopulates the it's DOM.
+    b. Puts in consistent spacing/styling.
+    c. Makes sure that the cards are in the right order, visually.
 
 ## Visual Appearences of Zones
 
@@ -34,6 +44,19 @@ Also confirm that the following zones are visually:
 3. able to hold cards.
 
 Again, if any of these above things are not working as intended, stop and fix the errors before moving on.
+
+## Zone Styling Requirements
+
+Every zone that you create must meet the following requirements:
+
+1. The zone has a CSS class that defines it's width, height, padding, and overflow.
+2. The zone has a minimum (min) height of 80 px and minimum width of 100px.
+3. If the zone is meant to hold cards adjacent to each other, then have the zone be 100px in width per card. If this exceeds the viewport, then make adjustments accordingly, even if that means reducing the width of the zone.
+4. The zone has a maximum height of 150px and a maximum width of 200px.
+5. The zone has a unique border, label, and background-color based on the type of zone it is.
+6. Log the result of whether any of the cards exceed the zone's dimensions. If they do, then fix the zone's dimensions before continuing.
+
+Furthermore, make sure to either use a CSS flexbox or grid for the layout so that each player can get their own designated row. And put each type of zone in it's own column. For example, all of the Hand zones should be in the same column.
 
 ## Game Setup Checks
 
