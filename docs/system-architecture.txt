@@ -1,0 +1,68 @@
+System Architecture
+
+Part 1: The LLM Chat Script Creator
+
+This is essentially what you created first, the chat interface, except it will have our new system prompt which instructs Claude to write a javascript file.
+
+1.1 The Client
+Use command line interface, not an html page.
+Program takes input from the user and sends it to the server
+The server returns Claude's responses to the program and these are printed for the user to read
+Once Claude has responded with a complete script, the client parses the response text to find just the javascript code.
+The client then writes that text to a .js file.
+
+1.2 The Server
+This program takes the user input from the client and sends it to Claude via the API.
+It collects Claude's response and sends it back to the client. 
+The server file contains the system prompt, which contains: A) Claude's role and task, B) complete information on the game engine
+
+So it looks something like this:
+
+User runs the program
+Server is started
+Client is started
+In the terminal, client program prints: "Enter your game description"
+User enters their game description and presses enter
+Client makes http request to server with the game description as message body and waits for response
+Server receives http request
+Extracts game description from http request message body
+Server prepares a message to claude: system prompt plus the game description
+The system prompt contains instructions for Claude to indicate where in his response the javascript code begins and ends, for example
+"Claude, begin your javascript code with the following line "JAVASCRIPT BEGINS HERE" and end it with "JAVASCRIPT ENDS HERE"
+Server sends the message to claude via anthropic's api and waits for response
+Server receives response
+Server sends response back to Client
+Client receives response
+Client prints response to terminal for user to see
+Client parses response, looking for the beginning and end of the javascript
+After finding the beginning and end of the javascript, the client extracts the text in between
+Client writes the text to a javascript file with an appropriate name.
+
+Develop this in stages to make it easier:
+1. Get the basic chat with Claude working
+2. System prompts are being sent to Claude
+3. LLM response contains javascript code and has beginning and ending delimiters
+4. The client is successfully parsing the response for the javascript code
+5. The javascript code in the response is correct, with a proper startGame() function and all the proper methods of the engine. Start VERY simple first - ie just creating a zone, nothing else.
+6. The client writing the parsed javascript code to a file in the right directory.
+
+Part 2: The Game Engine
+When the game engine starts, it searches a specific directory for javascript files (this is where Claude will write the files to)
+When it finds a script there, it loads/reads it.
+Takes the name of the script and displays it somewhere on the page (so that we know we've found it).
+The GUI has a "Start Game" button.
+When this button is pressed, it calls the "startGame()" function in the script. 
+The startGame() function then runs the game, calling game engine methods as it needs to.
+The script needs access to the game engine's methods, so we should pass it a reference to the game engine when we call startGame()
+Like this: "startGame(gameEngine)" or maybe "startGame(this)", etc
+
+Development stages:
+1. The engine can find the script
+2. The engine can read the script's name and show it somewhere in the GUI
+3. When the user clicks "Start Game", the "startGame()" function in the script is actually called.
+4. When the user clicks Start Game, the script successfully calls some methods in the engine. Very simple at first, ie just creating a zone.
+
+Once this is done, we have the foundation of the system and we can then make the script more complex and create actual simple games.
+
+
+

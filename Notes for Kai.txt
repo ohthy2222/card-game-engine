@@ -4,6 +4,8 @@ A button to create a 52-card deck.
 A button to create zones
 A button to move cards between zones. 
 
+Start with the building blocks of the engine, just what you need to get the above working. You don't need to create the whole thing yet.
+
 NEXT assignment: Once you've got the engine and a GUI working, we'll start with very simple scripts (simpler even than War) that call the engine functions.
 
 6-20-25
