@@ -48,6 +48,7 @@ function getUserInput() {
     });
 }
 
+// ***2b***
 /* Function to send message to Claude API */
 async function sendToClaudeAPI(systemPrompt, userDescription) {
     try {
@@ -72,7 +73,7 @@ async function sendToClaudeAPI(systemPrompt, userDescription) {
                 }
             }
         );
-
+// ***2c***
         return response.data.content[0].text;
     } catch (error) {
         console.error('❌ Claude API error:', error.response?.data || error.message);
@@ -249,7 +250,7 @@ app.post('/api/generate', async (req, res) => {
 
 /* Start server for API mode */
 function startServer() {
-    app.listen(PORT, () => {
+    app.listen(PORT, () => { /* Have Express listen on port 3000 */
         console.log(`🚀 Card Game Generator server running on http://localhost:${PORT}`);
         console.log('📡 API endpoint: POST /api/generate');
     });
