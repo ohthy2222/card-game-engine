@@ -246,6 +246,7 @@
     <div id="floating-notification" class="floating-notification"></div>
 
     <script src="card-game-engine.js"></script>
+    <script src="print-hello-world-to-the-scree.js"></script>
     <script>
         // Global game state and utilities
         let gameEngine = null;
@@ -256,6 +257,35 @@
         function initializeEngine() {
             try {
                 gameEngine = new GameEngine();
+                
+                // Add display methods to the engine for GUI integration
+                gameEngine.setGameTitle = function(title) {
+                    document.getElementById('game-message').textContent = title;
+                    log(`Game title set to: ${title}`, 'info');
+                };
+                
+                gameEngine.clearDisplay = function() {
+                    const gameContent = document.getElementById('game-content');
+                    gameContent.innerHTML = '<div class="game-message" id="game-message"></div>';
+                    log("Display cleared", 'info');
+                };
+                
+                gameEngine.displayText = function(text, position = 'center', size = 'medium') {
+                    const gameMessage = document.getElementById('game-message');
+                    if (gameMessage) {
+                        gameMessage.textContent = text;
+                        gameMessage.style.fontSize = size === 'large' ? '2rem' : size === 'small' ? '1rem' : '1.2rem';
+                        gameMessage.style.textAlign = position === 'center' ? 'center' : position === 'bottom' ? 'center' : 'left';
+                        if (position === 'bottom') {
+                            gameMessage.style.position = 'absolute';
+                            gameMessage.style.bottom = '20px';
+                            gameMessage.style.left = '50%';
+                            gameMessage.style.transform = 'translateX(-50%)';
+                        }
+                        log(`Displayed text: "${text}" (${position}, ${size})`, 'info');
+                    }
+                };
+                
                 log("Game engine initialized successfully", 'success');
                 return true;
             } catch (error) {
@@ -305,14 +335,25 @@
                 }
             }
 
+            // Initialize the Hello World game
+            if (typeof game !== 'undefined' && game.init) {
+                try {
+                    game.init(gameEngine);
+                    log("Hello World game initialized successfully", 'success');
+                } catch (error) {
+                    log("Failed to initialize Hello World game: " + error.message, 'error');
+                    return;
+                }
+            }
+
             // Update UI
             gameRunning = true;
             document.getElementById('start-game-btn').textContent = '🎮 Game Running';
             document.getElementById('start-game-btn').disabled = true;
-            document.getElementById('game-message').textContent = 'Game is now running! Check the command log for activity.';
+            document.getElementById('game-message').textContent = 'Hello World Card Game is now running!';
 
             // Show notification
-            showNotification('Game started successfully!', 'success');
+            showNotification('Hello World Card Game started!', 'success');
 
             // If there's a game loop function in the loaded script, start it
             if (typeof gameLoop === 'function') {
@@ -391,11 +432,25 @@
         // Placeholder for dynamically created game script
         // The actual game implementation will be loaded here
         
-        // Example game loop function that can be implemented by external scripts
+        // Game loop function for the Hello World card game
         function gameLoop() {
-            // This function will be called when the game starts
-            // External JavaScript files can override this function
-            log("Default game loop started - override this function in your game script", 'info');
+            if (typeof game !== 'undefined' && game.update) {
+                game.update();
+            }
+            
+            // Add click handler for the game viewport
+            const gameContent = document.getElementById('game-content');
+            gameContent.onclick = function(event) {
+                if (typeof game !== 'undefined' && game.handleClick) {
+                    const rect = gameContent.getBoundingClientRect();
+                    const x = event.clientX - rect.left;
+                    const y = event.clientY - rect.top;
+                    game.handleClick(x, y);
+                    log(`Game clicked at position (${x}, ${y})`, 'info');
+                }
+            };
+            
+            log("Hello World card game loop started", 'info');
         }
     </script>
 </body>
