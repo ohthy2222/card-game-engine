@@ -197,7 +197,7 @@ async function runCardGameGenerator() {
             if (writeJavaScriptFile(jsCode, filename)) {
                 console.log('\n✅ Game successfully generated!');
                 console.log(`📁 File saved as: ${filename}`);
-                console.log('🌐 Open tester-gui.html in your browser to play');
+                console.log('🌐 Open simple-gui.html in your browser to play');
                 console.log('💡 Make sure to include the script in your HTML file');
             } else {
                 console.error('❌ Failed to write JavaScript file');

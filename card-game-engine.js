@@ -139,7 +139,7 @@ class GameEngine
             
             const response = await fetch(`${this.serverUrl}/api/games`);
             if (!response.ok) {
-                throw new Error('Server not available. Start server with: node claude-sandbox.js --server');
+                throw new Error('Server responded with error. Make sure server is running with: node claude-sandbox.js --server');
             }
             
             const data = await response.json();
@@ -150,8 +150,12 @@ class GameEngine
             
             return this.discoveredGames;
         } catch (error) {
-            console.error('❌ GameEngine: Failed to discover games:', error.message);
-            this.displayError('Failed to discover games: ' + error.message);
+            let errorMessage = error.message;
+            if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED')) {
+                errorMessage = 'Server not running! Start with: node claude-sandbox.js --server';
+            }
+            console.error('❌ GameEngine: Failed to discover games:', errorMessage);
+            this.displayError(errorMessage);
             return [];
         }
     }
