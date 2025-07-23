@@ -16,17 +16,18 @@ const PORT = 3000; /* Server port */
 /* Enable middleware */
 app.use(cors()); /* Enable CORS for cross-origin requests */
 app.use(express.json()); /* Parse JSON request bodies */
+app.use(express.static(__dirname)); /* Serve static files from current directory */
 
 /* Function to load system prompt from file */
 function loadSystemPrompt() {
     try {
-        const promptPath = path.join(__dirname, 'simple-system-prompt.md');
+        const promptPath = path.join(__dirname, 'system prompts', 'simple-system-prompt.md');
         const systemPrompt = fs.readFileSync(promptPath, 'utf8');
         console.log('✅ System prompt loaded successfully');
         return systemPrompt.trim();
     } catch (error) {
         console.error('❌ Error loading system prompt:', error.message);
-        console.error('Make sure simple-system-prompt.md exists in the current directory');
+        console.error('Make sure simple-system-prompt.md exists in the system prompts directory');
         process.exit(1);
     }
 }
@@ -61,7 +62,7 @@ async function sendToClaudeAPI(systemPrompt, userDescription) {
         const response = await axios.post(
             'https://api.anthropic.com/v1/messages',
             {
-                model: 'claude-3-sonnet-20240229', /* Using Claude 3 Sonnet model */
+                model: 'claude-opus-4-20250514', /* Using Claude 3 Sonnet model */
                 max_tokens: 4000, /* Higher token limit for code generation */
                 messages: [{ role: 'user', content: fullMessage }]
             },
@@ -211,6 +212,25 @@ async function runCardGameGenerator() {
         process.exit(1);
     }
 }
+
+/* API endpoint for listing generated game files */
+app.get('/api/games', (req, res) => {
+    try {
+        const gameFiles = fs.readdirSync(__dirname)
+            .filter(file => file.endsWith('.js') && file !== 'claude-sandbox.js' && file !== 'card-game-engine.js')
+            .map(file => ({
+                filename: file,
+                name: file.replace('.js', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                created: fs.statSync(path.join(__dirname, file)).mtime
+            }))
+            .sort((a, b) => b.created - a.created);
+        
+        res.json({ games: gameFiles });
+    } catch (error) {
+        console.error('Error listing games:', error.message);
+        res.status(500).json({ error: 'Failed to list games' });
+    }
+});
 
 /* API endpoint for web-based requests (optional) */
 app.post('/api/generate', async (req, res) => {

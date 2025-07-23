@@ -199,6 +199,7 @@
             box-shadow: 0 4px 12px rgba(159, 122, 234, 0.3);
         }
 
+
         @media (max-width: 768px) {
             .control-section {
                 flex-direction: column;
@@ -251,7 +252,6 @@
         // Global game state and utilities
         let gameEngine = null;
         let gameRunning = false;
-        let commandQueue = [];
 
         // Initialize game engine
         function initializeEngine() {
@@ -320,13 +320,13 @@
         };
 
         // Start game function that will be called by the Start Game button
-        function startGame() {
+        async function startGame() {
             if (gameRunning) {
                 log("Game is already running", 'info');
                 return;
             }
 
-            log("Starting game...", 'info');
+            log("Starting game via GameEngine...", 'info');
             
             // Initialize engine if not already done
             if (!gameEngine) {
@@ -335,32 +335,24 @@
                 }
             }
 
-            // Initialize the Hello World game
-            if (typeof game !== 'undefined' && game.init) {
-                try {
-                    game.init(gameEngine);
-                    log("Hello World game initialized successfully", 'success');
-                } catch (error) {
-                    log("Failed to initialize Hello World game: " + error.message, 'error');
-                    return;
+            // Use GameEngine's startGame method
+            const success = await gameEngine.startGame(0); // Start first available game
+            
+            if (success) {
+                // Update UI
+                gameRunning = true;
+                document.getElementById('start-game-btn').textContent = '🎮 Game Running';
+                document.getElementById('start-game-btn').disabled = true;
+                
+                const currentGame = gameEngine.getCurrentGame();
+                if (currentGame) {
+                    document.getElementById('game-message').textContent = `${currentGame.name} is now running!`;
+                    log(`${currentGame.name} started successfully`, 'success');
+                    showNotification(`${currentGame.name} started!`, 'success');
                 }
-            }
-
-            // Update UI
-            gameRunning = true;
-            document.getElementById('start-game-btn').textContent = '🎮 Game Running';
-            document.getElementById('start-game-btn').disabled = true;
-            document.getElementById('game-message').textContent = 'Hello World Card Game is now running!';
-
-            // Show notification
-            showNotification('Hello World Card Game started!', 'success');
-
-            // If there's a game loop function in the loaded script, start it
-            if (typeof gameLoop === 'function') {
-                log("Starting game loop...", 'info');
-                gameLoop();
             } else {
-                log("No game loop function found. Game engine is ready for commands.", 'info');
+                log("Failed to start game", 'error');
+                showNotification('Failed to start game', 'error');
             }
         }
 
@@ -412,6 +404,8 @@
                 notification.classList.remove('show');
             }, 3000);
         }
+
+        // The GameEngine now handles all game discovery and loading
 
         // Make functions available globally for external scripts
         window.log = log;
