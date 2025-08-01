@@ -171,6 +171,60 @@
             }
         }
 
+        @keyframes fadeInText {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Card visual styles */
+        .card-visual {
+            position: absolute;
+            width: 60px;
+            height: 84px;
+            background: linear-gradient(145deg, #ffffff, #f7fafc);
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #2d3748;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 5;
+        }
+
+        .card-visual:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-visual.red {
+            color: #e53e3e;
+        }
+
+        .card-visual.black {
+            color: #2d3748;
+        }
+
+        @keyframes cardFlip {
+            0% { transform: rotateY(0deg) scale(1); }
+            50% { transform: rotateY(90deg) scale(1.1); }
+            100% { transform: rotateY(0deg) scale(1); }
+        }
+
+        .card-visual.flipping {
+            animation: cardFlip 0.6s ease;
+        }
+
         .floating-notification {
             position: fixed;
             top: 20px;
@@ -271,19 +325,110 @@
                 };
                 
                 gameEngine.displayText = function(text, position = 'center', size = 'medium') {
-                    const gameMessage = document.getElementById('game-message');
-                    if (gameMessage) {
-                        gameMessage.textContent = text;
-                        gameMessage.style.fontSize = size === 'large' ? '2rem' : size === 'small' ? '1rem' : '1.2rem';
-                        gameMessage.style.textAlign = position === 'center' ? 'center' : position === 'bottom' ? 'center' : 'left';
-                        if (position === 'bottom') {
-                            gameMessage.style.position = 'absolute';
-                            gameMessage.style.bottom = '20px';
-                            gameMessage.style.left = '50%';
-                            gameMessage.style.transform = 'translateX(-50%)';
-                        }
-                        log(`Displayed text: "${text}" (${position}, ${size})`, 'info');
+                    const gameContent = document.getElementById('game-content');
+                    if (!gameContent) return;
+                    
+                    // Create a new text element for each displayText call
+                    const textElement = document.createElement('div');
+                    textElement.className = 'game-text';
+                    textElement.textContent = text;
+                    
+                    // Set styling based on parameters
+                    textElement.style.position = 'absolute';
+                    textElement.style.color = '#e2e8f0';
+                    textElement.style.fontSize = size === 'large' ? '2rem' : size === 'small' ? '1rem' : '1.2rem';
+                    textElement.style.fontWeight = size === 'large' ? 'bold' : 'normal';
+                    textElement.style.zIndex = '10';
+                    textElement.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.8)';
+                    textElement.style.whiteSpace = 'nowrap';
+                    
+                    // Position the element based on position parameter
+                    if (position === 'center') {
+                        textElement.style.left = '50%';
+                        textElement.style.top = '50%';
+                        textElement.style.transform = 'translate(-50%, -50%)';
+                        textElement.style.textAlign = 'center';
+                    } else if (position === 'left') {
+                        textElement.style.left = '20px';
+                        // Stack left-aligned text vertically
+                        const existingLeftTexts = gameContent.querySelectorAll('.game-text[data-position="left"]');
+                        textElement.style.top = (20 + existingLeftTexts.length * 35) + 'px';
+                        textElement.style.textAlign = 'left';
+                    } else if (position === 'bottom') {
+                        textElement.style.left = '50%';
+                        textElement.style.bottom = '20px';
+                        textElement.style.transform = 'translateX(-50%)';
+                        textElement.style.textAlign = 'center';
                     }
+                    
+                    // Store position data for stacking
+                    textElement.setAttribute('data-position', position);
+                    textElement.setAttribute('data-size', size);
+                    
+                    // Add animation
+                    textElement.style.opacity = '0';
+                    textElement.style.animation = 'fadeInText 0.5s ease forwards';
+                    
+                    gameContent.appendChild(textElement);
+                    log(`Displayed text: "${text}" (${position}, ${size})`, 'info');
+                };
+                
+                // Add card visualization methods
+                gameEngine.displayCard = function(card, x, y, faceUp = true) {
+                    const gameContent = document.getElementById('game-content');
+                    if (!gameContent || !card) return;
+                    
+                    const cardElement = document.createElement('div');
+                    cardElement.className = 'card-visual';
+                    cardElement.id = `visual-card-${card.id}`;
+                    
+                    // Set card color based on suit
+                    if (card.suit === '♥' || card.suit === '♦') {
+                        cardElement.classList.add('red');
+                    } else {
+                        cardElement.classList.add('black');
+                    }
+                    
+                    // Display card content
+                    if (faceUp && card.display) {
+                        cardElement.textContent = card.display;
+                    } else if (faceUp && card.rank && card.suit) {
+                        cardElement.textContent = card.rank + card.suit;
+                    } else {
+                        cardElement.textContent = '🂠';
+                        cardElement.style.color = '#4a5568';
+                    }
+                    
+                    // Position the card
+                    cardElement.style.left = x + 'px';
+                    cardElement.style.top = y + 'px';
+                    
+                    // Add flip animation
+                    cardElement.classList.add('flipping');
+                    setTimeout(() => {
+                        cardElement.classList.remove('flipping');
+                    }, 600);
+                    
+                    gameContent.appendChild(cardElement);
+                    log(`Displayed card: "${cardElement.textContent}" at (${x}, ${y})`, 'info');
+                    
+                    return cardElement;
+                };
+                
+                gameEngine.animateCardMovement = function(cardElement, fromX, fromY, toX, toY, duration = 500) {
+                    if (!cardElement) return;
+                    
+                    cardElement.style.transition = `all ${duration}ms ease`;
+                    cardElement.style.left = toX + 'px';
+                    cardElement.style.top = toY + 'px';
+                    cardElement.style.transform = 'scale(1.1)';
+                    
+                    setTimeout(() => {
+                        cardElement.style.transform = 'scale(1)';
+                        cardElement.style.transition = 'all 0.3s ease';
+                    }, duration);
+                    
+                    log(`Animated card movement from (${fromX}, ${fromY}) to (${toX}, ${toY})`, 'info');
                 };
                 
                 log("Game engine initialized successfully", 'success');
