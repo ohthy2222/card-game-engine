@@ -4,8 +4,9 @@
   "description": "Card Game Generator - Command Line Interface for Creating Card Games",
   "main": "claude-sandbox.js",
   "scripts": {
+    "setup": "bash setup.sh",
     "start": "node.exe claude-sandbox.js",
-    "server": "node.exe claude-sandbox.js --server",
+    "server": "PATH=.:$PATH node.exe claude-sandbox.js --server",
     "commit": "git add . && git commit -m"
   },
   "dependencies": {

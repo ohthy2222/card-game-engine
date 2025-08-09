@@ -1,7 +1,7 @@
 /* Card Game Generator - Command Line Interface for Creating Card Games */
 
 const express = require('express'); /* Import Express framework for HTTP server functionality */
-const axios = require('axios'); /* Import Axios HTTP client for making API requests to Claude */
+const { spawn, execSync } = require('child_process'); /* Import child_process for running Claude Code CLI */
 const cors = require('cors'); /* CORS middleware for cross-origin requests */
 const fs = require('fs'); /* File system module for reading and writing files */
 const path = require('path'); /* Path module for handling file paths */
@@ -41,7 +41,7 @@ function getUserInput() {
 
     return new Promise((resolve) => {
         console.log('🎮 Card Game Generator');
-        console.log('=' * 50);
+        console.log('='.repeat(50));
         rl.question('Enter your game description: ', (answer) => {
             rl.close();
             resolve(answer.trim());
@@ -50,35 +50,99 @@ function getUserInput() {
 }
 
 // ***2b***
-/* Function to send message to Claude API */
-async function sendToClaudeAPI(systemPrompt, userDescription) {
+/* Function to send message to Claude using Claude Code CLI */
+async function sendToClaudeAPI(systemPrompt, userDescription, claudeCommand = 'claude') {
     try {
-        console.log('\n🤖 Sending request to Claude...');
+        console.log('\n🤖 Sending request to Claude Code...');
         
         /* Prepare the full message combining system prompt and user description */
         const fullMessage = `${systemPrompt}\n\nUser's game description: ${userDescription}`;
         
-        /* Make API request to Claude */
-        const response = await axios.post(
-            'https://api.anthropic.com/v1/messages',
-            {
-                model: 'claude-opus-4-20250514', /* Using Claude 3 Sonnet model */
-                max_tokens: 4000, /* Higher token limit for code generation */
-                messages: [{ role: 'user', content: fullMessage }]
-            },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': process.env.ANTHROPIC_API_KEY, /* API key from environment */
-                    'anthropic-version': '2023-06-01'
+        try {
+            /* Set up environment for Claude Code CLI on Windows */
+            const env = { ...process.env };
+            
+            /* Try to find Git bash executable */
+            const possibleBashPaths = [
+                'C:\\Program Files\\Git\\bin\\bash.exe',
+                'C:\\Program Files (x86)\\Git\\bin\\bash.exe',
+                process.env.USERPROFILE + '\\Documents\\Git\\usr\\bin\\bash.exe',  // Based on your PATH
+                'C:\\Users\\sauce\\Documents\\Git\\usr\\bin\\bash.exe'  // Your specific path
+            ];
+            
+            for (const bashPath of possibleBashPaths) {
+                if (fs.existsSync(bashPath)) {
+                    env.CLAUDE_CODE_GIT_BASH_PATH = bashPath;
+                    console.log(`🔧 Using Git bash: ${bashPath}`);
+                    break;
                 }
             }
-        );
-// ***2c***
-        return response.data.content[0].text;
+            
+            /* Try using execSync with input parameter instead of spawn */
+            try {
+                const response = execSync(`${claudeCommand} --print`, {
+                    input: fullMessage,
+                    encoding: 'utf8',
+                    env: env,
+                    maxBuffer: 1024 * 1024 * 10,
+                    timeout: 60000 // 60 second timeout
+                });
+                
+                console.log('✅ Claude response received');
+                return response.trim();
+            } catch (execError) {
+                console.log('💥 execSync failed, trying alternative approach...');
+                console.log('Error:', execError.message);
+                
+                // Fallback to spawn with direct stdin writing
+                const response = await new Promise((resolve, reject) => {
+                    console.log(`🔧 Fallback: Using spawn with direct stdin`);
+                    
+                    const claude = spawn('bash', ['-c', `${claudeCommand} --print`], {
+                        env: env,
+                        stdio: ['pipe', 'pipe', 'pipe'],
+                        cwd: __dirname
+                    });
+                    
+                    let stdout = '';
+                    let stderr = '';
+                    
+                    claude.stdout.on('data', (data) => {
+                        stdout += data.toString();
+                    });
+                    
+                    claude.stderr.on('data', (data) => {
+                        stderr += data.toString();
+                    });
+                    
+                    claude.on('close', (code) => {
+                        if (code === 0) {
+                            resolve(stdout);
+                        } else {
+                            reject(new Error(`Claude fallback failed with code ${code}: ${stderr}`));
+                        }
+                    });
+                    
+                    claude.on('error', (err) => {
+                        reject(err);
+                    });
+                    
+                    // Write the prompt to stdin
+                    claude.stdin.write(fullMessage);
+                    claude.stdin.end();
+                });
+                
+                return response.trim();
+            }
+            
+            return response.trim();
+        } catch (cliError) {
+            throw cliError;
+        }
+        
     } catch (error) {
-        console.error('❌ Claude API error:', error.response?.data || error.message);
-        throw new Error('Failed to get response from Claude API');
+        console.error('❌ Claude Code error:', error.message);
+        throw new Error('Failed to get response from Claude Code CLI');
     }
 }
 
@@ -159,11 +223,33 @@ function writeJavaScriptFile(jsCode, filename) {
 /* Main function to run the card game generator */
 async function runCardGameGenerator() {
     try {
-        /* Check if API key is present */
-        if (!process.env.ANTHROPIC_API_KEY) {
-            console.error('❌ Error: ANTHROPIC_API_KEY environment variable not set');
-            console.error('Please set your API key: export ANTHROPIC_API_KEY=your_key_here');
-            process.exit(1);
+        /* Check if Claude Code CLI is available - use npx as fallback */
+        let claudeCommand = 'npx @anthropic-ai/claude-code';
+        
+        console.log('🔍 Looking for Claude Code CLI...');
+        
+        /* Try to find the best available Claude command */
+        const possibleCommands = [
+            'claude',
+            'npx @anthropic-ai/claude-code'
+        ];
+        
+        let claudeFound = false;
+        for (const cmd of possibleCommands) {
+            try {
+                execSync(`${cmd} --version`, { stdio: 'ignore', timeout: 5000 });
+                claudeCommand = cmd;
+                claudeFound = true;
+                console.log(`✅ Claude Code CLI found: ${cmd}`);
+                break;
+            } catch (error) {
+                // Continue trying other commands
+            }
+        }
+        
+        if (!claudeFound) {
+            console.log('⚠️  Claude CLI not directly available, using npx fallback...');
+            claudeCommand = 'npx @anthropic-ai/claude-code';
         }
         
         /* Load system prompt */
@@ -178,7 +264,7 @@ async function runCardGameGenerator() {
         }
         
         /* Send to Claude API */
-        const response = await sendToClaudeAPI(systemPrompt, userDescription);
+        const response = await sendToClaudeAPI(systemPrompt, userDescription, claudeCommand);
         
         /* Display Claude's response */
         console.log('\n' + '='.repeat(50));
@@ -242,7 +328,7 @@ app.post('/api/generate', async (req, res) => {
         }
         
         const systemPrompt = loadSystemPrompt();
-        const response = await sendToClaudeAPI(systemPrompt, description);
+        const response = await sendToClaudeAPI(systemPrompt, description, 'claude');
         const jsCode = parseJavaScriptCode(response);
         
         if (jsCode) {
